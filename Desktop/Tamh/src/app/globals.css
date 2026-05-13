@@ -1,0 +1,205 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   TÀMH — GORGEOUS & ELEGANT
+   Deep Charcoal · Black · Gold (#D4AF37)
+   ============================================================ */
+
+:root {
+  --color-charcoal: #0a0a0b;
+  --color-charcoal-soft: #15151a;
+  --color-gold: #d4af37;
+  --color-gold-soft: #f6e8a6;
+  --color-ivory: #f5f1e8;
+
+  /* Layered surfaces for glassmorphism */
+  --glass-bg: rgba(20, 20, 24, 0.55);
+  --glass-border: rgba(212, 175, 55, 0.18);
+  --glass-shadow: 0 16px 48px -16px rgba(0, 0, 0, 0.7);
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background: radial-gradient(
+      ellipse at 20% -10%,
+      rgba(212, 175, 55, 0.08) 0%,
+      transparent 55%
+    ),
+    radial-gradient(ellipse at 110% 110%, rgba(92, 31, 44, 0.18) 0%, transparent 50%),
+    var(--color-charcoal);
+  color: var(--color-ivory);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* iPad-friendly smooth scroll */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================================
+   Component utilities
+   ============================================================ */
+
+@layer components {
+  /* Glass card */
+  .glass-card {
+    @apply relative overflow-hidden rounded-2xl border border-gold/15
+           bg-charcoal-100/60 backdrop-blur-luxe;
+    box-shadow: var(--glass-shadow), inset 0 1px 0 0 rgba(212, 175, 55, 0.08);
+  }
+
+  /* Gold-shine border on hover */
+  .gold-border {
+    @apply relative;
+  }
+  .gold-border::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0 rounded-[inherit]
+           opacity-0 transition-opacity duration-500;
+    background: linear-gradient(
+      135deg,
+      rgba(212, 175, 55, 0) 0%,
+      rgba(212, 175, 55, 0.5) 50%,
+      rgba(212, 175, 55, 0) 100%
+    );
+    padding: 1px;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  .gold-border:hover::before {
+    @apply opacity-100;
+  }
+
+  /* Display heading — Italiana-like display serif */
+  .display-heading {
+    @apply font-display tracking-widest2 text-ivory uppercase;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Gold text gradient */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #fbf5dc 0%, #d4af37 50%, #b8952a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Luxe gold button */
+  .btn-gold {
+    @apply relative inline-flex items-center justify-center gap-2
+           rounded-full px-6 py-3 text-sm font-medium uppercase
+           tracking-widest2 text-charcoal-900
+           transition-all duration-300 active:scale-[0.97];
+    background: linear-gradient(135deg, #f6e8a6 0%, #d4af37 50%, #b8952a 100%);
+    box-shadow:
+      0 8px 24px -8px rgba(212, 175, 55, 0.6),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.35);
+  }
+  .btn-gold::after {
+    content: "";
+    @apply absolute inset-0 rounded-full opacity-0 transition-opacity duration-500;
+    background: linear-gradient(
+      110deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  .btn-gold:hover::after {
+    @apply opacity-100;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           border border-gold/30 bg-charcoal-100/40 px-6 py-3 text-sm
+           font-medium uppercase tracking-widest2 text-ivory
+           transition-all duration-300 hover:border-gold/60
+           hover:bg-charcoal-100/80 hover:text-gold active:scale-[0.97];
+  }
+
+  /* Section divider with gold accent */
+  .gold-divider {
+    @apply relative flex items-center justify-center gap-4 py-6;
+  }
+  .gold-divider::before,
+  .gold-divider::after {
+    content: "";
+    @apply h-px flex-1;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(212, 175, 55, 0.4),
+      transparent
+    );
+  }
+
+  /* Noise overlay — apply to a fixed bg layer */
+  .noise-overlay::after {
+    content: "";
+    @apply pointer-events-none fixed inset-0 z-[1] opacity-[0.035];
+    background-image: var(--noise-url);
+    mix-blend-mode: overlay;
+  }
+
+  /* Custom scrollbar (WebKit) */
+  .luxe-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .luxe-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .luxe-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #6e5618, #d4af37);
+    border-radius: 999px;
+  }
+}
+
+/* ============================================================
+   Reusable animations
+   ============================================================ */
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+  }
+  50% {
+    box-shadow: 0 0 24px 4px rgba(212, 175, 55, 0.4);
+  }
+}
+
+.animate-float-up {
+  animation: float-up 0.7s ease-out both;
+}
+
+/* Selection */
+::selection {
+  background: rgba(212, 175, 55, 0.35);
+  color: #fff;
+}
