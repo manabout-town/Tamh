@@ -45,7 +45,16 @@ const config: Config = {
       fontFamily: {
         serif: ["var(--font-serif)", "Cormorant Garamond", "Playfair Display", "serif"],
         sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "Italiana", "serif"],
+        display: ["var(--font-display)", "Playfair Display", "serif"],
+        // 한글 본문용 고딕 — 영문이 섞여도 가독성 유지
+        korean: [
+          "var(--font-korean)",
+          "Noto Sans KR",
+          "Apple SD Gothic Neo",
+          "Pretendard",
+          "system-ui",
+          "sans-serif",
+        ],
       },
       backgroundImage: {
         "gold-gradient":

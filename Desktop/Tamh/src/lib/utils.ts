@@ -7,18 +7,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /** 한국 원화 포맷 (예: 18,000) */
-export function formatKRW(amount: number, withSymbol = false) {
-  const formatted = new Intl.NumberFormat("ko-KR").format(amount);
-  return withSymbol ? `₩${formatted}` : formatted;
+export function formatKRW(amount: number | null | undefined) {
+  if (amount == null) return "—";
+  return new Intl.NumberFormat("ko-KR").format(amount);
 }
 
-/** 두 가격 (잔/병) 동시 노출 포맷 */
-export function formatGlassBottle(glass: number, bottle: number | null) {
-  if (bottle == null) return `${formatKRW(glass)}`;
-  return `${formatKRW(glass)} / ${formatKRW(bottle)}`;
-}
-
-/** 시간 상대 표시 (예: 방금 전 · 3분 전) */
+/** 시간 상대 표시 (방금 전 · 3분 전 …) */
 export function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const sec = Math.floor(diff / 1000);
@@ -32,11 +26,9 @@ export function timeAgo(iso: string) {
   return `${day}일 전`;
 }
 
-/** 안전한 슬러그(URL용 영문/숫자/하이픈) */
-export function toSlug(input: string) {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9가-힣\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
+/** 정수만 남기는 input 파서 (가격 인라인 편집용) */
+export function parseIntegerInput(raw: string): number | null {
+  const cleaned = raw.replace(/[^0-9]/g, "");
+  if (!cleaned) return null;
+  return Number(cleaned);
 }

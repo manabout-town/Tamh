@@ -1,11 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Inter, Italiana } from "next/font/google";
+import { Cormorant_Garamond, Inter, Playfair_Display, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { AmbientBackground } from "@/components/layout/AmbientBackground";
-import { CartProvider } from "@/components/cart/CartProvider";
-import { CartDrawer } from "@/components/cart/CartDrawer";
 
 const serif = Cormorant_Garamond({
   subsets: ["latin"],
@@ -21,24 +19,27 @@ const sans = Inter({
   display: "swap",
 });
 
-const display = Italiana({
+// 영문 디스플레이 — 굵고 우아하지만 가독성 좋은 세리프
+const display = Playfair_Display({
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
   variable: "--font-display",
   display: "swap",
 });
 
+// 한글 본문 — 깔끔한 고딕
+const korean = Noto_Sans_KR({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-korean",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "TÀMH — Single Malt & Cocktail Bar",
-  description:
-    "TÀMH의 디지털 메뉴 — 싱글 몰트, 칵테일, 그리고 우아한 한 잔의 시간.",
+  title: "TÀMH — POS",
+  description: "TÀMH 매장 운영 — 메뉴 관리 + 매장 도면",
   metadataBase: new URL("https://bartamh.imweb.me"),
-  openGraph: {
-    title: "TÀMH",
-    description: "Single Malt · Cocktail · Bar",
-    type: "website",
-    locale: "ko_KR",
-  },
 };
 
 export const viewport: Viewport = {
@@ -55,18 +56,15 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${serif.variable} ${sans.variable} ${display.variable}`}
+      className={`${serif.variable} ${sans.variable} ${display.variable} ${korean.variable}`}
     >
       <body className="font-sans antialiased noise-overlay luxe-scroll">
         <AmbientBackground />
-        <CartProvider>
-          <div className="relative z-10 flex min-h-screen flex-col">
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-          </div>
-          <CartDrawer />
-        </CartProvider>
+        <div className="relative z-10 flex min-h-screen flex-col">
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </div>
       </body>
     </html>
   );
