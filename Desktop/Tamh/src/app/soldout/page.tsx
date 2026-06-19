@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { MenuBoard } from "@/components/menu/MenuBoard";
+import { SoldoutBoard } from "@/components/menu/SoldoutBoard";
 import type { Category, Menu } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ async function getData(): Promise<{ categories: Category[]; menus: Menu[] }> {
   }
 }
 
-export default async function MenuPage() {
+export default async function SoldoutPage() {
   const { categories, menus } = await getData();
-  return <MenuBoard categories={categories} menus={menus} />;
+  return <SoldoutBoard categories={categories} menus={menus} />;
 }

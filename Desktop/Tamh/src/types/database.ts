@@ -23,6 +23,7 @@ export interface Menu {
   description: string | null;
   price: number;
   bottle_price: number | null;
+  event_price: number | null;
   image_url: string | null;
   is_active: boolean;
   is_recommended: boolean;

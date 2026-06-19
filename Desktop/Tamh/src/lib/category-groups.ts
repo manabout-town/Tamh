@@ -52,6 +52,11 @@ export const PRIMARY_GROUPS: GroupDef[] = [
   },
 ];
 
+/** UI에서 카테고리 이름을 다르게 표시할 때 사용하는 매핑 */
+export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  Signature: "Weekly Event",
+};
+
 /**
  * 카테고리 이름이 어떤 그룹에 속하는지 빠르게 찾기.
  * 매핑에 없는 카테고리는 기본적으로 whisky 그룹으로 분류 (안전한 fallback).

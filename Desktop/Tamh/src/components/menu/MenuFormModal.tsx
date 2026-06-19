@@ -194,9 +194,9 @@ export function MenuFormModal({ categories, menu, onClose, onSaved }: Props) {
               onChange={(e) => update("is_recommended", e.target.checked)}
               className="h-5 w-5 accent-black"
             />
-            <Sparkles className="h-4 w-4 text-zinc-500" strokeWidth={1.6} />
+            <Sparkles className="h-4 w-4 text-amber-500" strokeWidth={1.6} />
             <span className="font-korean text-sm font-medium text-zinc-700">
-              시그니처(추천 메뉴)
+              위클리 이벤트 배너에 표시
             </span>
           </label>
 

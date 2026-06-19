@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TÀMH — Menu Preview</title>
+<style>
+  :root{
+    --bg:#0e0e10;
+    --panel:#17171a;
+    --panel-2:#1d1d21;
+    --border:#2a2a2f;
+    --gold:#c9a25b;
+    --gold-soft:#c9a25b33;
+    --text:#ece8e0;
+    --text-dim:#9a958c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    padding:48px 24px 28px;
+    text-align:center;
+    border-bottom:1px solid var(--border);
+  }
+  header h1{
+    font-family:Georgia, 'Times New Roman', serif;
+    letter-spacing:6px;
+    font-size:34px;
+    margin:0 0 8px;
+    color:var(--text);
+  }
+  header p{
+    margin:0;
+    letter-spacing:3px;
+    font-size:11px;
+    color:var(--gold);
+    text-transform:uppercase;
+  }
+  .sub{
+    margin-top:6px;
+    color:var(--text-dim);
+    font-size:12px;
+    letter-spacing:1px;
+  }
+
+  .wrap{
+    max-width:980px;
+    margin:0 auto;
+    padding:32px 20px 80px;
+  }
+
+  .section-title{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .section-title h2{
+    font-size:13px;
+    letter-spacing:4px;
+    text-transform:uppercase;
+    color:var(--text);
+    margin:0;
+  }
+  .section-title span{
+    font-size:11px;
+    color:var(--text-dim);
+  }
+
+  .filter-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:36px;
+  }
+  .filter-chip{
+    padding:7px 14px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:var(--panel);
+    color:var(--text-dim);
+    font-size:12px;
+    cursor:pointer;
+    user-select:none;
+    transition:all .15s ease;
+    white-space:nowrap;
+  }
+  .filter-chip:hover{
+    border-color:var(--gold);
+    color:var(--text);
+  }
+  .filter-chip.active{
+    background:var(--gold-soft);
+    border-color:var(--gold);
+    color:var(--gold);
+  }
+  .filter-chip .count{
+    opacity:.6;
+    font-size:10px;
+    margin-left:4px;
+  }
+  .filter-clear{
+    padding:7px 14px;
+    border-radius:999px;
+    background:transparent;
+    color:var(--text-dim);
+    font-size:12px;
+    border:1px dashed var(--border);
+    cursor:pointer;
+  }
+  .filter-clear:hover{ color:var(--text); }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+    gap:18px;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    transition:transform .18s ease, border-color .18s ease;
+  }
+  .card:hover{
+    border-color:var(--gold);
+    transform:translateY(-2px);
+  }
+  .card.hidden{ display:none; }
+
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .name-en{
+    font-size:16px;
+    font-weight:600;
+    color:var(--text);
+    margin:0;
+  }
+  .name-kr{
+    font-size:12px;
+    color:var(--text-dim);
+    margin:2px 0 0;
+  }
+  .price{
+    font-size:14px;
+    color:var(--gold);
+    white-space:nowrap;
+    font-weight:600;
+  }
+
+  .desc{
+    font-size:13px;
+    line-height:1.6;
+    color:#cfcac1;
+    border-top:1px solid var(--border);
+    padding-top:12px;
+  }
+
+  .tag-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .tag{
+    font-size:11px;
+    padding:4px 10px;
+    border-radius:999px;
+    background:var(--panel-2);
+    color:var(--text-dim);
+    border:1px solid var(--border);
+  }
+  .tag.is-match{
+    border-color:var(--gold);
+    color:var(--gold);
+    background:var(--gold-soft);
+  }
+
+  .similar{
+    font-size:12px;
+    color:var(--text-dim);
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    align-items:center;
+  }
+  .similar b{
+    color:var(--text);
+    font-weight:600;
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    margin-right:4px;
+  }
+  .similar-pill{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    padding:3px 9px;
+    border-radius:8px;
+    font-size:11px;
+  }
+
+  .label{
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-bottom:2px;
+  }
+
+  .empty-state{
+    text-align:center;
+    color:var(--text-dim);
+    padding:60px 0;
+    font-size:13px;
+    display:none;
+  }
+
+  footer{
+    text-align:center;
+    padding:30px 0 50px;
+    color:var(--text-dim);
+    font-size:11px;
+    letter-spacing:2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TÀMH</h1>
+  <p>SINGLE MALT · COCKTAIL · BAR</p>
+  <div class="sub">Campbeltown — 콘텐츠 보강 테스트 (3종)</div>
+</header>
+
+<div class="wrap">
+  <div class="section-title">
+    <h2>Campbeltown</h2>
+    <span id="visibleCount">3종 표시 중</span>
+  </div>
+
+  <div class="filter-bar" id="filterBar"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="empty-state" id="emptyState">선택한 조건에 맞는 위스키가 없어요.</div>
+</div>
+
+<footer>TAMH BAR · MENU PREVIEW (LOCAL)</footer>
+
+<script>
+const items = [
+  {
+    nameEn: "Kilkerran 12y",
+    nameKr: "킬커란 12년",
+    price: "₩31,000",
+    desc: "캠벨타운 특유의 오일리한 질감에 가벼운 피트 스모크와 시트러스, 버터스카치가 어우러진 균형 잡힌 몰트.",
+    tags: ["스모키 입문자", "디저트 페어링", "캠벨타운 입문"],
+    similar: ["Springbank 10y", "Old Pulteney 12y", "Talisker 10y"]
+  },
+  {
+    nameEn: "Springbank 10y",
+    nameKr: "스프링뱅크 10년",
+    price: "₩38,000",
+    desc: "버번+셰리 캐스크 조합으로 트로피컬 과일, 바닐라, 가벼운 스모크와 짠맛이 동시에 느껴지는 캠벨타운 대표 몰트.",
+    tags: ["다채로운 풍미 선호", "단맛+스모키 밸런스", "개성파"],
+    similar: ["Kilkerran 12y", "Talisker 10y", "Glenfarclas 12y"]
+  },
+  {
+    nameEn: "Springbank 15y",
+    nameKr: "스프링뱅크 15년",
+    price: "₩58,000",
+    desc: "가죽, 다크 초콜릿, 건과일에 시그니처 '스프링뱅크 펑크'가 더해진 깊고 복합적인 셰리 숙성 몰트.",
+    tags: ["셰리밤 애호가", "묵직한 풍미 선호", "가죽·오크향 선호"],
+    similar: ["Glendronach 15y", "Aberlour A'bunadh", "GlenAllachie 15y"]
+  }
+];
+
+const allTags = [...new Set(items.flatMap(i => i.tags))];
+let activeTags = new Set();
+
+const filterBar = document.getElementById('filterBar');
+const grid = document.getElementById('grid');
+const emptyState = document.getElementById('emptyState');
+const visibleCount = document.getElementById('visibleCount');
+
+function tagCount(tag){
+  return items.filter(i => i.tags.includes(tag)).length;
+}
+
+function renderFilters(){
+  filterBar.innerHTML = '';
+  allTags.forEach(tag => {
+    const chip = document.createElement('div');
+    chip.className = 'filter-chip' + (activeTags.has(tag) ? ' active' : '');
+    chip.innerHTML = tag + '<span class="count">' + tagCount(tag) + '</span>';
+    chip.onclick = () => {
+      if(activeTags.has(tag)) activeTags.delete(tag);
+      else activeTags.add(tag);
+      render();
+    };
+    filterBar.appendChild(chip);
+  });
+  const clear = document.createElement('div');
+  clear.className = 'filter-clear';
+  clear.textContent = '필터 초기화';
+  clear.onclick = () => { activeTags.clear(); render(); };
+  filterBar.appendChild(clear);
+}
+
+function renderCards(){
+  grid.innerHTML = '';
+  let shown = 0;
+  items.forEach(item => {
+    const match = activeTags.size === 0 || item.tags.some(t => activeTags.has(t));
+    if(match) shown++;
+    const card = document.createElement('div');
+    card.className = 'card' + (match ? '' : ' hidden');
+
+    const tagsHtml = item.tags.map(t =>
+      '<span class="tag' + (activeTags.has(t) ? ' is-match' : '') + '">' + t + '</span>'
+    ).join('');
+
+    const similarHtml = item.similar.map(s =>
+      '<span class="similar-pill">' + s + '</span>'
+    ).join('');
+
+    card.innerHTML = `
+      <div class="card-top">
+        <div>
+          <p class="name-en">${item.nameEn}</p>
+          <p class="name-kr">${item.nameKr}</p>
+        </div>
+        <div class="price">${item.price}</div>
+      </div>
+      <div class="desc">${item.desc}</div>
+      <div>
+        <div class="label">이런 손님에게 좋아요</div>
+        <div class="tag-row">${tagsHtml}</div>
+      </div>
+      <div class="similar">
+        <b>유사 위스키</b>${similarHtml}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  visibleCount.textContent = shown + '종 표시 중';
+  emptyState.style.display = shown === 0 ? 'block' : 'none';
+}
+
+function render(){
+  renderFilters();
+  renderCards();
+}
+
+render();
+</script>
+
+</body>
+</html>

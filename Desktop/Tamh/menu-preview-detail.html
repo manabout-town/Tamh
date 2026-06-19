@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAMH — Menu + Detail Preview</title>
+<style>
+  :root{
+    --bg:#0e0e10;
+    --panel:#17171a;
+    --panel-2:#1d1d21;
+    --border:#2a2a2f;
+    --gold:#c9a25b;
+    --gold-soft:#c9a25b33;
+    --text:#ece8e0;
+    --text-dim:#9a958c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    padding:40px 24px 22px;
+    text-align:center;
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    background:var(--bg);
+    z-index:20;
+  }
+  header h1{
+    font-family:Georgia, 'Times New Roman', serif;
+    letter-spacing:6px;
+    font-size:30px;
+    margin:0 0 6px;
+    color:var(--text);
+  }
+  header p.tagline{
+    margin:0;
+    letter-spacing:3px;
+    font-size:11px;
+    color:var(--gold);
+    text-transform:uppercase;
+  }
+
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:22px 18px 90px;
+  }
+
+  .search-box{
+    width:100%;
+    padding:13px 16px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    font-size:14px;
+    margin-bottom:16px;
+    outline:none;
+  }
+  .search-box::placeholder{ color:var(--text-dim); }
+  .search-box:focus{ border-color:var(--gold); }
+
+  .cat-bar{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:14px;
+    margin-bottom:6px;
+    scrollbar-width:thin;
+  }
+  .cat-chip{
+    flex:0 0 auto;
+    padding:9px 16px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text-dim);
+    font-size:13px;
+    cursor:pointer;
+    white-space:nowrap;
+    user-select:none;
+  }
+  .cat-chip.active{
+    background:var(--text);
+    color:#0e0e10;
+    border-color:var(--text);
+    font-weight:600;
+  }
+
+  .filter-toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin:10px 0 10px;
+  }
+  .filter-toggle-row .label-strong{
+    font-size:12px;
+    letter-spacing:1px;
+    color:var(--text-dim);
+    text-transform:uppercase;
+  }
+  .filter-toggle-btn{
+    padding:8px 14px;
+    border-radius:8px;
+    border:1px solid var(--gold);
+    background:var(--gold-soft);
+    color:var(--gold);
+    font-size:12px;
+    cursor:pointer;
+  }
+
+  .filter-bar{
+    display:none;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:18px;
+    padding:14px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+  }
+  .filter-bar.open{ display:flex; }
+  .filter-chip{
+    padding:7px 13px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:var(--panel-2);
+    color:var(--text-dim);
+    font-size:12px;
+    cursor:pointer;
+    user-select:none;
+    white-space:nowrap;
+  }
+  .filter-chip:hover{ border-color:var(--gold); color:var(--text); }
+  .filter-chip.active{
+    background:var(--gold-soft);
+    border-color:var(--gold);
+    color:var(--gold);
+  }
+  .filter-chip .count{ opacity:.6; font-size:10px; margin-left:4px; }
+  .filter-clear{
+    padding:7px 13px;
+    border-radius:999px;
+    background:transparent;
+    color:var(--text-dim);
+    font-size:12px;
+    border:1px dashed var(--border);
+    cursor:pointer;
+  }
+
+  .section-title{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin:26px 0 12px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--border);
+  }
+  .section-title h2{
+    font-size:13px;
+    letter-spacing:4px;
+    text-transform:uppercase;
+    color:var(--text);
+    margin:0;
+  }
+  .section-title span{ font-size:11px; color:var(--text-dim); }
+
+  .row{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    transition:border-color .15s ease;
+  }
+  .row.hidden{ display:none; }
+  .row:hover{ border-color:#3a3a40; }
+
+  .row-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .row-names{ min-width:0; }
+  .name-en{
+    font-size:15px;
+    font-weight:600;
+    color:var(--text);
+    margin:0;
+  }
+  .name-kr{
+    font-size:11.5px;
+    color:var(--text-dim);
+    margin:2px 0 0;
+  }
+  .row-right{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex:0 0 auto;
+  }
+  .price{
+    font-size:14px;
+    color:var(--gold);
+    white-space:nowrap;
+    font-weight:600;
+  }
+  .detail-btn{
+    padding:7px 14px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text-dim);
+    font-size:11.5px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .detail-btn:hover{ border-color:var(--gold); color:var(--gold); }
+  .detail-btn.open{
+    background:var(--gold-soft);
+    border-color:var(--gold);
+    color:var(--gold);
+  }
+
+  .detail-panel{
+    display:none;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+  }
+  .detail-panel.open{ display:block; }
+
+  .desc{
+    font-size:13px;
+    line-height:1.6;
+    color:#cfcac1;
+    margin-bottom:12px;
+  }
+  .label{
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-bottom:6px;
+  }
+  .tag-row{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .tag{
+    font-size:11px;
+    padding:4px 10px;
+    border-radius:999px;
+    background:var(--panel-2);
+    color:var(--text-dim);
+    border:1px solid var(--border);
+  }
+  .tag.is-match{
+    border-color:var(--gold);
+    color:var(--gold);
+    background:var(--gold-soft);
+  }
+  .similar-row{
+    font-size:12px;
+    color:var(--text-dim);
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    align-items:center;
+  }
+  .similar-pill{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    padding:3px 9px;
+    border-radius:8px;
+    font-size:11px;
+  }
+
+  .empty-state{
+    text-align:center;
+    color:var(--text-dim);
+    padding:60px 0;
+    font-size:13px;
+    display:none;
+  }
+
+  footer{
+    text-align:center;
+    padding:30px 0 50px;
+    color:var(--text-dim);
+    font-size:11px;
+    letter-spacing:2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TAMH</h1>
+  <p class="tagline">SINGLE MALT · COCKTAIL · BAR</p>
+</header>
+
+<div class="wrap">
+  <input class="search-box" id="searchBox" placeholder="메뉴 검색 (영문 / 한글)">
+
+  <div class="cat-bar" id="catBar"></div>
+
+  <div class="filter-toggle-row">
+    <span class="label-strong" id="resultCount"></span>
+    <button class="filter-toggle-btn" id="filterToggleBtn">이런 손님에게 좋아요 필터 ▾</button>
+  </div>
+
+  <div class="filter-bar" id="filterBar"></div>
+
+  <div id="sections"></div>
+
+  <div class="empty-state" id="emptyState">조건에 맞는 메뉴가 없어요.</div>
+</div>
+
+<footer>TAMH BAR · MENU + DETAIL PREVIEW (LOCAL, 실제 사이트 미적용)</footer>
+
+<script>
+const items = [{"cat": "Signature", "en": "Royal Salute 21y (Weekly)", "kr": "로얄살루트 21년 (30ml) — Weekly Event", "price": "₩30,000", "desc": "21년 숙성 블렌디드의 정수, 벌꿀과 오렌지 껍질, 부드러운 오크가 입안 가득 퍼지는 위클리 한정 1잔.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Royal Salute 21y", "Royal Salute 25y", "Ballantine's 30y (Weekly)"]}, {"cat": "Signature", "en": "Ballantine's 30y (Weekly)", "kr": "발렌타인 30년 (30ml) — Weekly Event", "price": "₩39,000", "desc": "몰트와 그레인의 정교한 블렌딩, 다크 초콜릿과 건포도, 긴 여운의 우디함이 돋보이는 프레스티지 한 잔.", "tags": ["한정판·희소가치 선호", "우디·스파이시 선호", "묵직한 디저트 페어링"], "similar": ["Royal Salute 21y (Weekly)", "Ballantine's 30y", "Royal Salute 25y"]}, {"cat": "Signature", "en": "Octomore .1.2 (Weekly)", "kr": "옥토모어 .1.2 (30ml) — Weekly Event", "price": "₩39,000", "desc": "세계 최고 피트 함량급 옥토모어를 30ml로 가볍게 — 타르, 캠프파이어 스모크가 폭발적으로 밀려온다.", "tags": ["피트·스모키 애호가", "카스크스트랭스(고도수) 선호", "개성파·실험적 풍미 선호"], "similar": ["Octomore 14.2", "Octomore 14.1", "Ardbeg Corryvreckan"]}, {"cat": "Signature", "en": "Royal Brackla 21y (Weekly)", "kr": "로얄브라큘라 21 (30ml) — Weekly Event", "price": "₩45,000", "desc": "'왕실의 몰트'라 불리는 로얄브라큘라의 21년, 과일 향과 스파이시한 오크가 정교하게 균형 잡힌 한 잔.", "tags": ["한정판·희소가치 선호", "우디·스파이시 선호", "시트러스·산미 선호"], "similar": ["Glenfiddich 23y (Weekly)", "Dalmore 18y", "Glenrothes 18y"]}, {"cat": "Signature", "en": "Glenfiddich 23y (Weekly)", "kr": "글렌피딕 23년 (30ml) — Weekly Event", "price": "₩60,000", "desc": "버번·셰리·럼 캐스크를 거친 그랑레저브, 트로피컬 과일과 캐러멜이 화려하게 피어나는 위클리 스페셜.", "tags": ["한정판·희소가치 선호", "트로피컬 과일향 선호", "셰리캐스크·단맛 선호"], "similar": ["Glenfiddich 21y", "Glenfiddich 18y", "Royal Brackla 21y (Weekly)"]}, {"cat": "Random Whisky", "en": "Random Whisky", "kr": "랜덤 위스키 (1+1 이벤트)", "price": "₩10,000", "desc": "오늘은 어떤 위스키가 나올까 — 가볍게 즐기는 깜짝 1+1 이벤트용 한 잔.", "tags": ["가벼운 입문용", "가성비 선호", "하이볼·가볍게"], "similar": ["Monkey Shoulder", "Glen Grant 10y", "Speyburn 10y"]}, {"cat": "Highland", "en": "Deanston 12y", "kr": "딘스톤 12년", "price": "₩14,000", "desc": "버번 캐스크 숙성으로 꿀, 바닐라, 가벼운 시트러스가 산뜻하게 느껴지는 입문용 하이랜드 몰트.", "tags": ["가벼운 입문용", "버번·바닐라 선호", "가성비 선호"], "similar": ["Glenmorangie Original", "AnCnoc 12y", "Tomatin 12y"]}, {"cat": "Highland", "en": "Glenmorangie Original", "kr": "글렌모렌지 오리지날", "price": "₩15,000", "desc": "레몬, 복숭아, 바닐라가 가볍게 어우러지는 플로럴하고 산뜻한 하이랜드 스탠다드.", "tags": ["가벼운 입문용", "시트러스·산미 선호", "하이볼·가볍게"], "similar": ["Deanston 12y", "AnCnoc 12y", "Glenmorangie Lasanta"]}, {"cat": "Highland", "en": "AnCnoc 12y", "kr": "아녹 12년", "price": "₩15,000", "desc": "꿀과 사과, 약간의 몰트 단맛이 부드럽게 퍼지는 가볍고 우아한 하이랜드 몰트.", "tags": ["가벼운 입문용", "시트러스·산미 선호", "가성비 선호"], "similar": ["Glenmorangie Original", "Old Pulteney 12y", "Balblair 12y"]}, {"cat": "Highland", "en": "Old Pulteney 12y", "kr": "올드 풀티니 12년", "price": "₩15,000", "desc": "바다 소금기와 토피, 가벼운 과일향이 함께 느껴지는 해안가 하이랜드 몰트.", "tags": ["오일리·해양성 선호", "가벼운 입문용", "가성비 선호"], "similar": ["Balblair 12y", "AnCnoc 12y", "Arran 10y"]}, {"cat": "Highland", "en": "Glenfarclas 8y", "kr": "글렌파클라스 8년", "price": "₩16,000", "desc": "셰리 캐스크 숙성 특유의 건포도와 캐러멜 단맛이 어린 연차에도 또렷하게 드러나는 몰트.", "tags": ["셰리캐스크·단맛 선호", "가성비 선호", "가벼운 입문용"], "similar": ["Glenfarclas 10y", "Glenfarclas 12y", "Aberlour Double Cask 12y"]}, {"cat": "Highland", "en": "Tomatin 12y", "kr": "토마틴 12년", "price": "₩16,000", "desc": "버번·셰리 캐스크의 조화로 꿀, 바닐라, 살짝의 견과류 향이 부드럽게 퍼지는 몰트.", "tags": ["가벼운 입문용", "셰리캐스크·단맛 선호", "가성비 선호"], "similar": ["Deanston 12y", "Tomatin 15y", "Glen Grant 12y"]}, {"cat": "Highland", "en": "Dalwhinnie 15y", "kr": "달위니 15년", "price": "₩16,000", "desc": "스코틀랜드에서 가장 높은 고지대 증류소답게 헤더 꽃향과 꿀, 가벼운 스모크가 우아하게 어우러진다.", "tags": ["가벼운 입문용", "시트러스·산미 선호", "가성비 선호"], "similar": ["Glenmorangie Original", "Oban 14y", "Old Pulteney 12y"]}, {"cat": "Highland", "en": "Balblair 12y", "kr": "발블레어 12년", "price": "₩17,000", "desc": "버번 캐스크 숙성의 바닐라, 토피와 함께 은은한 짠맛이 느껴지는 해안가 하이랜드 몰트.", "tags": ["오일리·해양성 선호", "가벼운 입문용", "가성비 선호"], "similar": ["Old Pulteney 12y", "AnCnoc 12y", "Arran 10y"]}, {"cat": "Highland", "en": "Glenfarclas 10y", "kr": "글렌파클라스 10년", "price": "₩18,000", "desc": "셰리 캐스크 100% 숙성, 건포도와 다크 캐러멜의 진한 단맛이 매력적인 가성비 셰리밤.", "tags": ["셰리캐스크·단맛 선호", "가성비 선호", "묵직한 디저트 페어링"], "similar": ["Glenfarclas 8y", "Glenfarclas 12y", "Macallan Sherry Cask 12y"]}, {"cat": "Highland", "en": "Glengoyne 12y", "kr": "글렌고인 12년", "price": "₩18,000", "desc": "피트를 전혀 쓰지 않는 증류소답게 몰트 본연의 꿀과 과일, 가벼운 견과류 풍미가 깨끗하게 드러난다.", "tags": ["가벼운 입문용", "시트러스·산미 선호", "가성비 선호"], "similar": ["Glengoyne 15y", "Dalwhinnie 15y", "Tomatin 12y"]}, {"cat": "Highland", "en": "Dalmore 12y", "kr": "달모어 12년", "price": "₩18,000", "desc": "오렌지 껍질, 다크 초콜릿, 셰리 단맛이 묵직하게 깔리는 달모어 시그니처 스타일의 입문 라인.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "우디·스파이시 선호"], "similar": ["Dalmore CigarMalt", "Dalmore 15y", "Glendronach 12y"]}, {"cat": "Highland", "en": "Glenmorangie Lasanta", "kr": "글렌모렌지 라산타", "price": "₩18,000", "desc": "올로로소 셰리 캐스크 피니시로 오리지널보다 한층 진한 건과일과 캐러멜 단맛이 더해진다.", "tags": ["셰리캐스크·단맛 선호", "가벼운 입문용", "트로피컬 과일향 선호"], "similar": ["Glenmorangie Original", "Glenmorangie Quinta Ruban", "Aberlour Double Cask 12y"]}, {"cat": "Highland", "en": "Oban 14y", "kr": "오반 14년", "price": "₩19,000", "desc": "바다 소금기와 가벼운 스모크, 오렌지 마멀레이드가 함께 느껴지는 웨스트 하이랜드 코스탈 몰트.", "tags": ["오일리·해양성 선호", "피트·스모키 애호가", "시트러스·산미 선호"], "similar": ["Old Pulteney 12y", "Talisker 10y", "Arran 10y"]}, {"cat": "Highland", "en": "Tomatin 15y", "kr": "토마틴 15년", "price": "₩19,000", "desc": "셰리 캐스크 피니시로 한층 깊어진 건과일 단맛과 부드러운 오크가 길게 이어지는 몰트.", "tags": ["셰리캐스크·단맛 선호", "가성비 선호", "우디·스파이시 선호"], "similar": ["Tomatin 12y", "Glenfarclas 12y", "Aberlour Double Cask 14y"]}, {"cat": "Highland", "en": "Glenfarclas 12y", "kr": "글렌파클라스 12년", "price": "₩19,000", "desc": "셰리 캐스크 풀숙성의 정석 — 건포도, 시나몬, 다크 캐러멜이 묵직하게 퍼지는 셰리밤 스타일.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "가성비 선호"], "similar": ["Glenfarclas 10y", "Glenfarclas 15y", "Aberlour Double Cask 12y"]}, {"cat": "Highland", "en": "Glendronach 12y", "kr": "글렌드로낙 12년", "price": "₩19,000", "desc": "올로로소 + PX 셰리 캐스크 더블 숙성, 진한 건포도와 토피 단맛이 풍부한 셰리 캐스크 대표 몰트.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "가성비 선호"], "similar": ["Glendronach 8y Hielan", "Glendronach PortWood", "Dalmore 12y"]}, {"cat": "Highland", "en": "Glendronach 8y Hielan", "kr": "글렌드로낙 8년 히란", "price": "₩20,000", "desc": "버번+셰리 혼합 캐스크로 한층 가볍고 산뜻하게 즐기는 글렌드로낙 엔트리 라인.", "tags": ["가벼운 입문용", "셰리캐스크·단맛 선호", "가성비 선호"], "similar": ["Glendronach 12y", "Glendronach Peated", "BenRiach 12y"]}, {"cat": "Highland", "en": "Glendronach Peated", "kr": "글렌드로낙 피티드", "price": "₩20,000", "desc": "글렌드로낙답지 않게 은은한 피트 스모크와 셰리 단맛이 동시에 느껴지는 개성 있는 라인업.", "tags": ["피트·스모키 애호가", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["Glendronach 12y", "BenRiach 12y", "Benromach 10y"]}, {"cat": "Highland", "en": "Glenmorangie Quinta Ruban", "kr": "글렌모렌지 퀸타루반", "price": "₩21,000", "desc": "포트 캐스크 피니시로 베리류 과일과 다크 초콜릿의 달콤함이 진하게 더해진 몰트.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "트로피컬 과일향 선호"], "similar": ["Glenmorangie Lasanta", "Arran Port Cask Finish", "Balvenie Madeira Cask 15y"]}, {"cat": "Highland", "en": "Glenfarclas 15y", "kr": "글렌파클라스 15년", "price": "₩23,000", "desc": "12년보다 한층 깊어진 셰리 단맛과 스파이시한 오크가 길게 이어지는 균형 잡힌 몰트.", "tags": ["셰리캐스크·단맛 선호", "우디·스파이시 선호", "묵직한 디저트 페어링"], "similar": ["Glenfarclas 12y", "Glendronach 15y", "GlenAllachie 15y"]}, {"cat": "Highland", "en": "Glenfarclas 105 CS", "kr": "글렌파클라스 105 CS", "price": "₩23,000", "desc": "60도에 가까운 캐스크 스트랭스, 셰리 단맛과 강렬한 알코올 파워를 동시에 즐기는 마니아용 몰트.", "tags": ["카스크스트랭스(고도수) 선호", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["GlenAllachie 10y CS", "Glenfarclas 12y CS", "Aberlour A'bunadh"]}, {"cat": "Highland", "en": "Glengoyne 15y", "kr": "글렌고인 15년", "price": "₩24,000", "desc": "셰리 캐스크 비중이 높아진 15년, 꿀과 견과류에 건포도 단맛이 더해진 부드러운 몰트.", "tags": ["셰리캐스크·단맛 선호", "가벼운 입문용", "묵직한 디저트 페어링"], "similar": ["Glengoyne 12y", "Glengoyne 18y", "Aberlour Double Cask 14y"]}, {"cat": "Highland", "en": "Glenmorangie Nectar D'Or", "kr": "글렌모렌지 더 넥타", "price": "₩25,000", "desc": "소테른 와인 캐스크 피니시로 살구, 꿀, 크렘 브륄레 같은 화려한 단맛이 도드라지는 몰트.", "tags": ["셰리캐스크·단맛 선호", "트로피컬 과일향 선호", "묵직한 디저트 페어링"], "similar": ["Glenmorangie Signet", "Arran Sauternes Cask Finish", "Balvenie Madeira Cask 15y"]}, {"cat": "Highland", "en": "Glendronach PortWood", "kr": "글렌드로낙 포트우드", "price": "₩26,000", "desc": "포트 와인 캐스크 숙성으로 베리류 과일잼과 다크 초콜릿 풍미가 진하게 묻어나는 몰트.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "트로피컬 과일향 선호"], "similar": ["Glenmorangie Quinta Ruban", "Glendronach 12y", "Balvenie Portwood Cask 21y"]}, {"cat": "Highland", "en": "Glenfarclas 12y CS", "kr": "글렌파클라스 12년 CS", "price": "₩30,000", "desc": "12년 원액을 캐스크 스트랭스 그대로 — 셰리 단맛과 묵직한 보디감이 강렬하게 다가온다.", "tags": ["카스크스트랭스(고도수) 선호", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["Glenfarclas 105 CS", "Glenlivet 13y CS", "GlenAllachie 10y CS"]}, {"cat": "Highland", "en": "Glendronach 15y", "kr": "글렌드로낙 15년", "price": "₩30,000", "desc": "올로로소 셰리로만 숙성된 '레볼루션', 다크 초콜릿과 에스프레소 같은 깊은 풍미가 인상적이다.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "우디·스파이시 선호"], "similar": ["Glenfarclas 15y", "Glendronach 16y", "Aberlour A'bunadh"]}, {"cat": "Highland", "en": "Dalmore CigarMalt", "kr": "달모어 시가몰트", "price": "₩32,000", "desc": "이름처럼 시가와 함께 즐기기 좋은 다크 초콜릿, 에스프레소, 스파이스의 묵직한 몰트.", "tags": ["묵직한 디저트 페어링", "우디·스파이시 선호", "셰리캐스크·단맛 선호"], "similar": ["Dalmore 12y", "Dalmore 15y", "Glendronach 16y"]}, {"cat": "Highland", "en": "Dalmore 15y", "kr": "달모어 15년", "price": "₩32,000", "desc": "셰리, 버번, 마데이라 캐스크를 거쳐 오렌지, 초콜릿, 헤이즐넛이 층층이 쌓이는 풍부한 몰트.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "트로피컬 과일향 선호"], "similar": ["Dalmore CigarMalt", "Dalmore 18y", "Glenrothes 18y"]}, {"cat": "Highland", "en": "Glendronach CS", "kr": "글렌드로낙 CS", "price": "₩33,000", "desc": "캐스크 스트랭스 도수에서 폭발하는 진한 셰리 단맛과 스파이스, 마니아를 위한 강렬한 한 잔.", "tags": ["카스크스트랭스(고도수) 선호", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["Glenfarclas 105 CS", "Aberlour A'bunadh", "GlenAllachie 10y CS"]}, {"cat": "Highland", "en": "Glengoyne 18y", "kr": "글렌고인 18년", "price": "₩36,000", "desc": "오랜 셰리 숙성으로 진한 건과일, 시나몬, 가죽 향까지 더해진 글렌고인의 플래그십 라인.", "tags": ["셰리캐스크·단맛 선호", "우디·스파이시 선호", "묵직한 디저트 페어링"], "similar": ["Glengoyne 15y", "Glendronach 16y", "GlenAllachie 18y"]}, {"cat": "Highland", "en": "Glenmorangie Signet", "kr": "글렌모렌지 시그넷", "price": "₩42,000", "desc": "초콜릿 몰트를 사용한 독특한 양조법으로 에스프레소, 다크 초콜릿의 진한 풍미가 매력적인 프레스티지 몰트.", "tags": ["개성파·실험적 풍미 선호", "묵직한 디저트 페어링", "한정판·희소가치 선호"], "similar": ["Glenmorangie Nectar D'Or", "Dalmore CigarMalt", "GlenAllachie Sinteis 2015"]}, {"cat": "Highland", "en": "Glendronach 16y", "kr": "글렌드로낙 16년", "price": "₩45,000", "desc": "'에이지드 인 셰리' 시리즈, 16년의 숙성이 더한 깊고 부드러운 건과일·오크 풍미.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "우디·스파이시 선호"], "similar": ["Glengoyne 18y", "Glendronach 15y", "GlenAllachie 18y"]}, {"cat": "Highland", "en": "Dalmore 18y", "kr": "달모어 18년", "price": "₩48,000", "desc": "마투살렘 셰리 캐스크 피니시까지 거친 플래그십, 에스프레소와 다크 체리의 깊은 단맛이 일품.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "한정판·희소가치 선호"], "similar": ["Dalmore 15y", "Glenrothes 18y", "Balvenie PX Cask 18y"]}, {"cat": "Highland", "en": "Glenfarclas Family 2000", "kr": "글렌파클라스 패밀리 2000", "price": "₩60,000", "desc": "글렌파클라스 패밀리 캐스크 시리즈, 빈티지 원액 특유의 깊고 클래식한 셰리 풍미를 그대로 담았다.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "우디·스파이시 선호"], "similar": ["Glenfarclas 25y", "Glendronach 2008", "GlenAllachie Sinteis 2015"]}, {"cat": "Highland", "en": "Glenfarclas 25y", "kr": "글렌파클라스 25년", "price": "₩60,000", "desc": "25년 셰리 숙성의 깊이, 다크 초콜릿과 무화과, 가죽까지 복합적으로 펼쳐지는 올드 스타일 몰트.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Glenfarclas Family 2000", "Glendronach 21y", "Macallan Sherry Cask 18y"]}, {"cat": "Highland", "en": "Glendronach 21y", "kr": "글렌드로낙 21년", "price": "₩60,000", "desc": "'패러렐 53'으로 불리던 올드 보틀링 계보, 진하고 클래식한 셰리밤의 정점.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Glenfarclas 25y", "Macallan Sherry Cask 18y", "Balvenie Single Barrel 15y Sherry"]}, {"cat": "Highland", "en": "Glendronach 2008", "kr": "글렌드로낙 2008", "price": "₩60,000", "desc": "빈티지 표기 싱글 캐스크, 특정 연도 원액 고유의 개성 있는 풍미를 즐길 수 있는 한정 보틀링.", "tags": ["한정판·희소가치 선호", "개성파·실험적 풍미 선호", "셰리캐스크·단맛 선호"], "similar": ["GlenAllachie Sinteis 2015", "Glenfarclas Family 2000", "Glendronach 21y"]}, {"cat": "Speyside", "en": "Glen Grant 10y", "kr": "글렌그란트 10년", "price": "₩12,000", "desc": "사과, 배 같은 가벼운 과일향과 깔끔한 몰트 단맛이 특징인 캐주얼한 입문용 스페이사이드.", "tags": ["가벼운 입문용", "가성비 선호", "하이볼·가볍게"], "similar": ["Speyburn 10y", "Glen Grant 12y", "Glenlivet 12y"]}, {"cat": "Speyside", "en": "Monkey Shoulder", "kr": "몽키 숄더", "price": "₩12,000", "desc": "3개 스페이사이드 몰트를 블렌딩한 부드럽고 가벼운 스타일, 하이볼로 즐기기 좋다.", "tags": ["하이볼·가볍게", "가벼운 입문용", "가성비 선호"], "similar": ["Glen Grant 10y", "Speyburn 10y", "Johnnie Walker Black Label"]}, {"cat": "Speyside", "en": "Speyburn 10y", "kr": "스페이번 10년", "price": "₩12,000", "desc": "꿀과 바닐라, 가벼운 시트러스가 산뜻하게 느껴지는 가성비 좋은 스페이사이드 몰트.", "tags": ["가벼운 입문용", "가성비 선호", "시트러스·산미 선호"], "similar": ["Glen Grant 10y", "Monkey Shoulder", "Glenrothes 12y"]}, {"cat": "Speyside", "en": "The Singleton Dufftown 12y", "kr": "싱글톤 더프타운 12년", "price": "₩14,000", "desc": "꿀, 사과, 시나몬 풍미가 부드럽게 어우러지는 마시기 편한 스페이사이드 스탠다드.", "tags": ["가벼운 입문용", "가성비 선호", "시트러스·산미 선호"], "similar": ["Cragganmore 12y", "Glenfiddich 12y", "Glenrothes 12y"]}, {"cat": "Speyside", "en": "Cragganmore 12y", "kr": "크라겐모어 12년", "price": "₩15,000", "desc": "허브와 가벼운 스모크, 과일향이 복합적으로 느껴지는 클래식 스페이사이드 블렌딩 몰트의 핵심 원액.", "tags": ["가벼운 입문용", "개성파·실험적 풍미 선호", "시트러스·산미 선호"], "similar": ["The Singleton Dufftown 12y", "Glenrothes 12y", "BenRiach 12y"]}, {"cat": "Speyside", "en": "Glenrothes 12y", "kr": "글렌로티스 12년", "price": "₩15,000", "desc": "오렌지, 바닐라, 가벼운 셰리 단맛이 깔끔하게 어우러지는 균형 잡힌 스페이사이드 몰트.", "tags": ["가벼운 입문용", "시트러스·산미 선호", "가성비 선호"], "similar": ["Glenfiddich 12y", "Glen Grant 12y", "Glenrothes WMC"]}, {"cat": "Speyside", "en": "Glenfiddich 12y", "kr": "글렌피딕 12년", "price": "₩16,000", "desc": "배, 사과 같은 가벼운 과일향과 부드러운 오크가 특징인 세계에서 가장 잘 알려진 싱글몰트.", "tags": ["가벼운 입문용", "가성비 선호", "시트러스·산미 선호"], "similar": ["Glenrothes 12y", "Glen Grant 12y", "Glenlivet 12y"]}, {"cat": "Speyside", "en": "Glen Grant 12y", "kr": "글렌그란트 12년", "price": "₩16,000", "desc": "10년보다 한층 부드러워진 바닐라와 사과 풍미, 깨끗하고 가벼운 음용감이 특징.", "tags": ["가벼운 입문용", "가성비 선호", "하이볼·가볍게"], "similar": ["Glen Grant 10y", "Glenfiddich 12y", "Glenlivet 12y"]}, {"cat": "Speyside", "en": "Glenlivet 12y", "kr": "글렌리벳 12년", "price": "₩16,000", "desc": "파인애플, 배 같은 산뜻한 과일향과 가벼운 꽃향이 특징인 스페이사이드의 정석 스타일.", "tags": ["가벼운 입문용", "시트러스·산미 선호", "가성비 선호"], "similar": ["Glenfiddich 12y", "Glen Grant 12y", "Aberlour Double Cask 12y"]}, {"cat": "Speyside", "en": "BenRiach 12y", "kr": "벤리악 12년", "price": "₩16,000", "desc": "버번·셰리·버건디 캐스크를 거쳐 과일, 꿀, 은은한 스모크까지 다채로운 풍미를 보여준다.", "tags": ["개성파·실험적 풍미 선호", "셰리캐스크·단맛 선호", "트로피컬 과일향 선호"], "similar": ["Glendronach Peated", "Benromach 10y", "GlenAllachie 12y"]}, {"cat": "Speyside", "en": "Benromach 10y", "kr": "벤로막 10년", "price": "₩16,000", "desc": "전통 방식 증류로 만든 묵직한 보디감에 가벼운 스모크와 셰리 단맛이 어우러진 개성 있는 몰트.", "tags": ["개성파·실험적 풍미 선호", "피트·스모키 애호가", "가성비 선호"], "similar": ["BenRiach 12y", "Glendronach Peated", "GlenAllachie 12y"]}, {"cat": "Speyside", "en": "Aberlour Double Cask 12y", "kr": "아벨라워 더블캐스크 12년", "price": "₩17,000", "desc": "셰리와 버번 캐스크의 조화로 캐러멜, 건포도, 바닐라가 부드럽게 어우러지는 인기 스테디셀러.", "tags": ["셰리캐스크·단맛 선호", "가벼운 입문용", "가성비 선호"], "similar": ["Glenlivet 12y", "Macallan Double Cask 12y", "Balvenie DoubleWood 12y"]}, {"cat": "Speyside", "en": "Macallan Double Cask 12y", "kr": "맥켈란 더블캐스크 12년", "price": "₩18,000", "desc": "유러피언+아메리칸 오크 셰리 캐스크의 조화, 바닐라와 생강빵 풍미가 산뜻하게 어우러진다.", "tags": ["셰리캐스크·단맛 선호", "가벼운 입문용", "트로피컬 과일향 선호"], "similar": ["Aberlour Double Cask 12y", "Macallan Sherry Cask 12y", "Macallan Triple Cask 12y"]}, {"cat": "Speyside", "en": "Balvenie DoubleWood 12y", "kr": "발베니 더블우드 12년", "price": "₩18,000", "desc": "버번 캐스크 숙성 후 셰리 캐스크에서 피니시 — 꿀과 바닐라에 견과류 단맛이 더해진 클래식.", "tags": ["셰리캐스크·단맛 선호", "가벼운 입문용", "가성비 선호"], "similar": ["Aberlour Double Cask 12y", "Balvenie Single Barrel 12y", "Macallan Double Cask 12y"]}, {"cat": "Speyside", "en": "Macallan Sherry Cask 12y", "kr": "맥켈란 셰리캐스크 12년", "price": "₩19,000", "desc": "100% 셰리 캐스크 숙성, 건포도와 오렌지 마멀레이드의 진한 단맛이 인상적인 맥켈란 클래식.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "트로피컬 과일향 선호"], "similar": ["Glenfarclas 10y", "Macallan Double Cask 12y", "Aberlour A'bunadh"]}, {"cat": "Speyside", "en": "Glen Grant 15y", "kr": "글렌그란트 15년", "price": "₩19,000", "desc": "12년보다 한층 깊어진 바닐라, 캐러멜 단맛과 부드러운 오크 피니시가 특징.", "tags": ["가벼운 입문용", "가성비 선호", "셰리캐스크·단맛 선호"], "similar": ["Glen Grant 12y", "Tomatin 15y", "Glenlivet 15y"]}, {"cat": "Speyside", "en": "Macallan Triple Cask 12y", "kr": "맥켈란 트리플캐스크 12년", "price": "₩19,000", "desc": "셰리·버번·리필 캐스크 3종 블렌딩으로 가벼운 단맛과 부드러운 균형감을 강조한 라인.", "tags": ["가벼운 입문용", "셰리캐스크·단맛 선호", "가성비 선호"], "similar": ["Macallan Double Cask 12y", "Macallan Sherry Cask 12y", "Aberlour Double Cask 12y"]}, {"cat": "Speyside", "en": "Glenfiddich 15y", "kr": "글렌피딕 15년", "price": "₩20,000", "desc": "솔레라 베팅 공법으로 만든 부드럽고 일관된 풍미, 꿀과 바닐라, 가벼운 스파이스가 어우러진다.", "tags": ["가벼운 입문용", "우디·스파이시 선호", "가성비 선호"], "similar": ["Glenfiddich 12y", "Glenlivet 15y", "Glenfiddich 18y"]}, {"cat": "Speyside", "en": "Glenlivet 15y", "kr": "글렌리벳 15년", "price": "₩20,000", "desc": "프렌치 오크 숙성으로 한층 스파이시해진 풍미, 바닐라와 견과류 단맛이 조화롭다.", "tags": ["우디·스파이시 선호", "가벼운 입문용", "가성비 선호"], "similar": ["Glenfiddich 15y", "Glenlivet 18y", "GlenAllachie 12y"]}, {"cat": "Speyside", "en": "GlenAllachie 12y", "kr": "글렌알라키 12년", "price": "₩23,000", "desc": "버번·셰리·버진오크 등 다양한 캐스크를 거쳐 과일, 견과류, 스파이스가 풍성하게 느껴지는 몰트.", "tags": ["개성파·실험적 풍미 선호", "셰리캐스크·단맛 선호", "트로피컬 과일향 선호"], "similar": ["BenRiach 12y", "GlenAllachie Cuvée Cask", "GlenAllachie 13y"]}, {"cat": "Speyside", "en": "Balvenie Single Barrel 12y", "kr": "발베니 싱글배럴 12년", "price": "₩23,000", "desc": "단일 버번 캐스크에서만 병입, 바닐라와 꿀의 깨끗하고 직선적인 풍미가 매력적이다.", "tags": ["가벼운 입문용", "버번·바닐라 선호", "개성파·실험적 풍미 선호"], "similar": ["Balvenie DoubleWood 12y", "Balvenie Caribbean Cask 14y", "Balvenie Madeira Cask 15y"]}, {"cat": "Speyside", "en": "Glenrothes WMC", "kr": "글렌로티스 WMC", "price": "₩24,000", "desc": "와인메이커스 컬렉션 한정 라인, 오렌지 마멀레이드와 진저브레드 풍미가 화려하게 펼쳐진다.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "트로피컬 과일향 선호"], "similar": ["Glenrothes 12y", "Glenrothes 18y", "Macallan Sherry Cask 12y"]}, {"cat": "Speyside", "en": "GlenAllachie Cuvée Cask", "kr": "글렌알라키 쿠베 캐스크", "price": "₩24,000", "desc": "와인 캐스크 피니시로 베리류 과일향과 스파이스가 화려하게 더해진 개성 있는 라인.", "tags": ["개성파·실험적 풍미 선호", "트로피컬 과일향 선호", "한정판·희소가치 선호"], "similar": ["GlenAllachie 12y", "Arran Amarone Cask Finish", "Balvenie Madeira Cask 15y"]}, {"cat": "Speyside", "en": "GlenAllachie 13y", "kr": "글렌알라키 13년", "price": "₩25,000", "desc": "12년보다 한층 깊어진 셰리 단맛과 견과류, 스파이스 풍미가 진하게 느껴지는 몰트.", "tags": ["셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호", "우디·스파이시 선호"], "similar": ["GlenAllachie 12y", "GlenAllachie 15y", "GlenAllachie 10y CS"]}, {"cat": "Speyside", "en": "Balvenie Caribbean Cask 14y", "kr": "발베니 캐리비안 캐스크 14년", "price": "₩25,000", "desc": "캐리비안 럼 캐스크 피니시로 바나나, 코코넛 같은 트로피컬한 단맛이 화려하게 더해진다.", "tags": ["트로피컬 과일향 선호", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["Balvenie Single Barrel 12y", "Glenfiddich 23y (Weekly)", "Kavalan Solist Brandy"]}, {"cat": "Speyside", "en": "Aberlour Double Cask 14y", "kr": "아벨라워 더블캐스크 14년", "price": "₩26,000", "desc": "12년보다 깊어진 건과일, 캐러멜 단맛에 부드러운 스파이스가 길게 이어지는 몰트.", "tags": ["셰리캐스크·단맛 선호", "우디·스파이시 선호", "묵직한 디저트 페어링"], "similar": ["Aberlour Double Cask 12y", "Glengoyne 15y", "Tomatin 15y"]}, {"cat": "Speyside", "en": "Aberlour A'bunadh", "kr": "아벨라워 아부나흐", "price": "₩28,000", "desc": "캐스크 스트랭스 무냉각 여과, 진한 셰리 단맛과 스파이스가 폭발적으로 다가오는 마니아 픽.", "tags": ["카스크스트랭스(고도수) 선호", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["Macallan Sherry Cask 12y", "Glenfarclas 105 CS", "GlenAllachie 10y CS"]}, {"cat": "Speyside", "en": "Balvenie Madeira Cask 15y", "kr": "발베니 마데이라 캐스크 15년", "price": "₩29,000", "desc": "마데이라 와인 캐스크 피니시로 견과류와 건과일, 산뜻한 단맛이 조화를 이루는 몰트.", "tags": ["셰리캐스크·단맛 선호", "트로피컬 과일향 선호", "개성파·실험적 풍미 선호"], "similar": ["Balvenie Caribbean Cask 14y", "Balvenie Madeira Cask 21y", "Glenmorangie Nectar D'Or"]}, {"cat": "Speyside", "en": "Balvenie Week of Peat 14y", "kr": "발베니 위크오브피트 14년", "price": "₩29,000", "desc": "1년에 단 1주만 피트 보리를 사용하는 한정 라인, 발베니 특유의 부드러움 속 은은한 스모크가 매력.", "tags": ["피트·스모키 애호가", "개성파·실험적 풍미 선호", "한정판·희소가치 선호"], "similar": ["Balvenie 19 Week of Peat", "Glendronach Peated", "Highland Park 12y"]}, {"cat": "Speyside", "en": "GlenAllachie 15y", "kr": "글렌알라키 15년", "price": "₩29,000", "desc": "13년보다 한층 깊고 묵직한 셰리·우디 풍미, 다크 초콜릿과 건과일이 길게 이어진다.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "우디·스파이시 선호"], "similar": ["GlenAllachie 13y", "GlenAllachie 18y", "Glenfarclas 15y"]}, {"cat": "Speyside", "en": "GlenAllachie 10y CS", "kr": "글렌알라키 10년 CS", "price": "₩29,000", "desc": "캐스크 스트랭스 도수 그대로 즐기는 진한 셰리 단맛과 강렬한 스파이스, 고도수 마니아용.", "tags": ["카스크스트랭스(고도수) 선호", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["Aberlour A'bunadh", "Glenfarclas 105 CS", "Glenlivet 16y Nadurra CS"]}, {"cat": "Speyside", "en": "Glen Grant 18y", "kr": "글렌그란트 18년", "price": "₩30,000", "desc": "오랜 숙성이 더한 깊은 캐러멜과 견과류 풍미, 부드럽고 균형 잡힌 올드 스타일 몰트.", "tags": ["가벼운 입문용", "셰리캐스크·단맛 선호", "우디·스파이시 선호"], "similar": ["Glen Grant 15y", "Glenlivet 18y", "Glenfiddich 18y"]}, {"cat": "Speyside", "en": "Macallan Double Cask 15y", "kr": "맥켈란 더블캐스크 15년", "price": "₩30,000", "desc": "12년보다 한층 풍성해진 바닐라, 생강빵, 건과일 풍미가 부드럽게 어우러진다.", "tags": ["셰리캐스크·단맛 선호", "가벼운 입문용", "트로피컬 과일향 선호"], "similar": ["Macallan Double Cask 12y", "Macallan Triple Cask 15y", "Macallan Double Cask 18y"]}, {"cat": "Speyside", "en": "Macallan Triple Cask 15y", "kr": "맥켈란 트리플캐스크 15년", "price": "₩30,000", "desc": "3종 캐스크 블렌딩의 균형감이 한층 깊어진 버전, 가벼운 단맛과 부드러운 오크가 특징.", "tags": ["가벼운 입문용", "셰리캐스크·단맛 선호", "가성비 선호"], "similar": ["Macallan Double Cask 15y", "Macallan Triple Cask 12y", "Glenfiddich 15y"]}, {"cat": "Speyside", "en": "Glenrothes 18y", "kr": "글렌로티스 18년", "price": "₩32,000", "desc": "오렌지, 다크 초콜릿, 스파이스가 복합적으로 어우러지는 깊고 우아한 숙성 몰트.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "우디·스파이시 선호"], "similar": ["Glenrothes WMC", "Dalmore 15y", "Macallan Sherry Cask 18y"]}, {"cat": "Speyside", "en": "Glenfiddich 18y", "kr": "글렌피딕 18년", "price": "₩32,000", "desc": "셰리·버번 캐스크 조합으로 다크 초콜릿, 오렌지, 스파이스가 깊게 어우러지는 인기 숙성 라인.", "tags": ["셰리캐스크·단맛 선호", "우디·스파이시 선호", "묵직한 디저트 페어링"], "similar": ["Glenfiddich 15y", "Glenfiddich 21y", "Glenlivet 18y"]}, {"cat": "Speyside", "en": "Glenlivet 18y", "kr": "글렌리벳 18년", "price": "₩32,000", "desc": "오렌지 껍질과 스파이스, 부드러운 셰리 단맛이 조화로운 글렌리벳의 프리미엄 라인.", "tags": ["셰리캐스크·단맛 선호", "우디·스파이시 선호", "묵직한 디저트 페어링"], "similar": ["Glenfiddich 18y", "Glen Grant 18y", "Glenlivet 13y CS"]}, {"cat": "Speyside", "en": "GlenAllachie Sinteis 2015", "kr": "글렌알라키 신테이스 2015", "price": "₩35,000", "desc": "버건디 와인 캐스크 피니시 한정 라인, 베리류 과일과 스파이스가 화려하게 펼쳐지는 빈티지.", "tags": ["한정판·희소가치 선호", "트로피컬 과일향 선호", "개성파·실험적 풍미 선호"], "similar": ["GlenAllachie Cuvée Cask", "Glendronach 2008", "Arran Amarone Cask Finish"]}, {"cat": "Speyside", "en": "Balvenie French Oak 16y", "kr": "발베니 16 프렌치오크", "price": "₩45,000", "desc": "프렌치 오크 와인 캐스크 피니시로 스파이스와 베리류 단맛이 우아하게 더해진 16년 숙성.", "tags": ["우디·스파이시 선호", "셰리캐스크·단맛 선호", "한정판·희소가치 선호"], "similar": ["Balvenie Madeira Cask 15y", "Balvenie PX Cask 18y", "Glenlivet 18y"]}, {"cat": "Speyside", "en": "Glenlivet 13y CS", "kr": "글렌리벳 13년 CS", "price": "₩47,000", "desc": "캐스크 스트랭스로 즐기는 글렌리벳, 강렬한 도수 속 과일과 오크 풍미가 선명하다.", "tags": ["카스크스트랭스(고도수) 선호", "개성파·실험적 풍미 선호", "우디·스파이시 선호"], "similar": ["Glenlivet 16y Nadurra CS", "GlenAllachie 10y CS", "Glenfarclas 105 CS"]}, {"cat": "Speyside", "en": "GlenAllachie 18y", "kr": "글렌알라키 18년", "price": "₩47,000", "desc": "오랜 숙성의 깊이, 다크 초콜릿과 가죽, 건과일까지 복합적으로 펼쳐지는 플래그십 라인.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "우디·스파이시 선호"], "similar": ["GlenAllachie 15y", "Glengoyne 18y", "Glendronach 16y"]}, {"cat": "Speyside", "en": "Glenlivet 16y Nadurra CS", "kr": "글렌리벳 나두라 16년 CS", "price": "₩48,000", "desc": "무냉각여과 캐스크 스트랭스, 바닐라와 과일향이 도수 그대로 강렬하게 살아있는 몰트.", "tags": ["카스크스트랭스(고도수) 선호", "트로피컬 과일향 선호", "개성파·실험적 풍미 선호"], "similar": ["Glenlivet 13y CS", "GlenAllachie 10y CS", "Balvenie 19 Week of Peat"]}, {"cat": "Speyside", "en": "Balvenie PX Cask 18y", "kr": "발베니 PX캐스크 18년", "price": "₩50,000", "desc": "페드로 히메네즈 셰리 캐스크 피니시로 진한 건포도, 무화과 단맛이 묵직하게 펼쳐진다.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "한정판·희소가치 선호"], "similar": ["Balvenie French Oak 16y", "Dalmore 18y", "Glendronach 21y"]}, {"cat": "Speyside", "en": "Balvenie 19 Week of Peat", "kr": "발베니 19년 위크오브피트", "price": "₩50,000", "desc": "위크오브피트 시리즈의 장기 숙성 버전, 부드러운 스모크와 깊은 오크 풍미가 함께한다.", "tags": ["피트·스모키 애호가", "한정판·희소가치 선호", "우디·스파이시 선호"], "similar": ["Balvenie Week of Peat 14y", "Talisker 18y", "Glenlivet 16y Nadurra CS"]}, {"cat": "Speyside", "en": "Glenfiddich 21y", "kr": "글렌피딕 21년", "price": "₩52,000", "desc": "캐리비안 럼 캐스크 피니시로 트로피컬 단맛과 스파이스가 화려하게 어우러지는 그랑레저브.", "tags": ["트로피컬 과일향 선호", "한정판·희소가치 선호", "셰리캐스크·단맛 선호"], "similar": ["Glenfiddich 23y (Weekly)", "Glenfiddich 18y", "Balvenie Caribbean Cask 14y"]}, {"cat": "Speyside", "en": "Macallan Double Cask 18y", "kr": "맥켈란 더블캐스크 18년", "price": "₩53,000", "desc": "오랜 숙성이 더한 진한 캐러멜, 건과일, 스파이스가 복합적으로 깊어진 더블캐스크 플래그십.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "한정판·희소가치 선호"], "similar": ["Macallan Double Cask 15y", "Macallan Sherry Cask 18y", "Glenrothes 18y"]}, {"cat": "Speyside", "en": "Macallan Sherry Cask 18y", "kr": "맥켈란 셰리캐스크 18년", "price": "₩60,000", "desc": "100% 셰리 캐스크 18년, 진한 건포도와 다크 초콜릿이 깊고 풍성하게 펼쳐지는 정점.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "한정판·희소가치 선호"], "similar": ["Macallan Sherry Cask 12y", "Macallan Double Cask 18y", "Glenfarclas 25y"]}, {"cat": "Speyside", "en": "Balvenie Single Barrel 15y Sherry", "kr": "발베니 15 싱글배럴 셰리", "price": "₩60,000", "desc": "단일 셰리 캐스크에서만 병입, 진한 건포도와 견과류 풍미가 또렷하게 드러나는 희소 라인.", "tags": ["셰리캐스크·단맛 선호", "한정판·희소가치 선호", "묵직한 디저트 페어링"], "similar": ["Balvenie Single Barrel 12y", "Glendronach 21y", "GlenAllachie 18y"]}, {"cat": "Speyside", "en": "Balvenie Portwood Cask 21y", "kr": "발베니 포트우드 캐스크 21년", "price": "₩68,000", "desc": "21년 숙성에 포트 캐스크 피니시까지, 베리류 과일과 다크 초콜릿이 진하게 어우러진 프레스티지 라인.", "tags": ["한정판·희소가치 선호", "묵직한 디저트 페어링", "트로피컬 과일향 선호"], "similar": ["Glendronach PortWood", "Balvenie Madeira Cask 21y", "Dalmore 18y"]}, {"cat": "Speyside", "en": "Balvenie Madeira Cask 21y", "kr": "발베니 마데이라 캐스크 21년", "price": "₩68,000", "desc": "21년 숙성과 마데이라 캐스크의 조화, 견과류와 건과일 풍미가 깊고 우아하게 펼쳐진다.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Balvenie Portwood Cask 21y", "Balvenie Madeira Cask 15y", "Macallan Sherry Cask 18y"]}, {"cat": "Speyside", "en": "Glenfiddich 23y", "kr": "글렌피딕 23년", "price": "₩78,000", "desc": "그랑레저브 23년, 버번·셰리·럼 캐스크를 거친 풍성한 트로피컬 단맛과 깊은 오크 피니시.", "tags": ["한정판·희소가치 선호", "트로피컬 과일향 선호", "묵직한 디저트 페어링"], "similar": ["Glenfiddich 21y", "Glenfiddich 23y (Weekly)", "Balvenie Madeira Cask 21y"]}, {"cat": "Campbeltown", "en": "Kilkerran 12y", "kr": "킬커란 12년", "price": "₩31,000", "desc": "캠벨타운 특유의 오일리한 질감에 가벼운 피트 스모크와 시트러스, 버터스카치가 어우러진 균형 잡힌 몰트.", "tags": ["피트·스모키 애호가", "가벼운 입문용", "오일리·해양성 선호"], "similar": ["Springbank 10y", "Old Pulteney 12y", "Talisker 10y"]}, {"cat": "Campbeltown", "en": "Springbank 10y", "kr": "스프링뱅크 10년", "price": "₩38,000", "desc": "버번+셰리 캐스크 조합으로 트로피컬 과일, 바닐라, 가벼운 스모크와 짠맛이 동시에 느껴지는 캠벨타운 대표 몰트.", "tags": ["개성파·실험적 풍미 선호", "피트·스모키 애호가", "트로피컬 과일향 선호"], "similar": ["Kilkerran 12y", "Talisker 10y", "Glenfarclas 12y"]}, {"cat": "Campbeltown", "en": "Springbank 15y", "kr": "스프링뱅크 15년", "price": "₩58,000", "desc": "가죽, 다크 초콜릿, 건과일에 시그니처 '스프링뱅크 펑크'가 더해진 깊고 복합적인 셰리 숙성 몰트.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "개성파·실험적 풍미 선호"], "similar": ["Glendronach 15y", "Aberlour A'bunadh", "GlenAllachie 15y"]}, {"cat": "Islay", "en": "Ardbeg Wee Beastie", "kr": "아드벡 위비스티", "price": "₩14,000", "desc": "아드벡 라인 중 가장 어리고 거친 5년산, 타르와 스모크가 강렬하게 폭발하는 입문용 피트 몰트.", "tags": ["피트·스모키 애호가", "가벼운 입문용", "개성파·실험적 풍미 선호"], "similar": ["Ardbeg 10y", "Caol Ila 12y", "Laphroaig 10y"]}, {"cat": "Islay", "en": "Caol Ila 12y", "kr": "쿨일라 12년", "price": "₩16,000", "desc": "바다 소금기와 가벼운 스모크, 산뜻한 시트러스가 함께 느껴지는 깔끔한 아일라 몰트.", "tags": ["피트·스모키 애호가", "오일리·해양성 선호", "가벼운 입문용"], "similar": ["Ardbeg Wee Beastie", "Bunnahabhain 12y", "Caol Ila DE"]}, {"cat": "Islay", "en": "Laphroaig Oak Select", "kr": "라프로익 오크셀렉트", "price": "₩16,000", "desc": "라프로익 중 가장 가벼운 피트감, 바닐라와 오크 단맛이 스모크와 부드럽게 어우러진다.", "tags": ["피트·스모키 애호가", "가벼운 입문용", "버번·바닐라 선호"], "similar": ["Laphroaig 10y", "Bowmore 12y", "Talisker 10y"]}, {"cat": "Islay", "en": "Talisker 10y", "kr": "탈리스커 10년", "price": "₩16,000", "desc": "후추 같은 스파이시함과 바다 소금기, 은은한 스모크가 어우러진 스카이섬 대표 몰트.", "tags": ["피트·스모키 애호가", "오일리·해양성 선호", "우디·스파이시 선호"], "similar": ["Talisker 8y SR", "Talisker Port Ruighe", "Oban 14y"]}, {"cat": "Islay", "en": "Lagavulin 8y", "kr": "라가불린 8년", "price": "₩17,000", "desc": "강렬한 피트와 짠맛, 약간의 단맛이 균형을 이루는 라가불린의 젊고 파워풀한 버전.", "tags": ["피트·스모키 애호가", "개성파·실험적 풍미 선호", "오일리·해양성 선호"], "similar": ["Lagavulin 16y", "Ardbeg 10y", "Laphroaig Quarter Cask"]}, {"cat": "Islay", "en": "Bowmore 12y", "kr": "보모어 12년", "price": "₩17,000", "desc": "꿀과 레몬, 부드러운 스모크가 조화롭게 어우러지는 비교적 마시기 편한 아일라 몰트.", "tags": ["피트·스모키 애호가", "가벼운 입문용", "시트러스·산미 선호"], "similar": ["Laphroaig Oak Select", "Bowmore 15y", "Bunnahabhain 12y"]}, {"cat": "Islay", "en": "Bunnahabhain 12y", "kr": "부나하벤 12년", "price": "₩18,000", "desc": "아일라 중 거의 유일하게 피트를 쓰지 않는 증류소, 셰리 단맛과 짠맛이 부드럽게 어우러진다.", "tags": ["오일리·해양성 선호", "셰리캐스크·단맛 선호", "가벼운 입문용"], "similar": ["Caol Ila 12y", "Bowmore 12y", "Bunnahabhain 12y CS"]}, {"cat": "Islay", "en": "Ardbeg Smoketrails", "kr": "아드벡 스모크트레일스", "price": "₩18,000", "desc": "여행 컨셉 한정 라인, 강렬한 피트 스모크에 이국적인 캐스크 풍미가 더해진 개성 있는 보틀링.", "tags": ["피트·스모키 애호가", "한정판·희소가치 선호", "개성파·실험적 풍미 선호"], "similar": ["Ardbeg 10y", "Ardbeg An Oa", "Ardbeg Smokiverse"]}, {"cat": "Islay", "en": "Ardbeg 10y", "kr": "아드벡 10년", "price": "₩18,000", "desc": "타르, 캠프파이어 스모크에 약간의 단맛이 균형을 이루는 아드벡의 시그니처 피트 몰트.", "tags": ["피트·스모키 애호가", "개성파·실험적 풍미 선호", "가성비 선호"], "similar": ["Ardbeg Wee Beastie", "Lagavulin 8y", "Laphroaig 10y"]}, {"cat": "Islay", "en": "Laphroaig 10y", "kr": "라프로익 10년", "price": "₩18,000", "desc": "소독약 같은 강렬한 요오드향과 짠맛, 스모크가 압도적인 아일라 정통 피트 몰트.", "tags": ["피트·스모키 애호가", "개성파·실험적 풍미 선호", "오일리·해양성 선호"], "similar": ["Ardbeg 10y", "Laphroaig Quarter Cask", "Lagavulin 8y"]}, {"cat": "Islay", "en": "Laphroaig Quarter Cask", "kr": "라프로익 쿼터캐스크", "price": "₩18,000", "desc": "작은 쿼터 캐스크 숙성으로 오크 접촉이 늘어 바닐라 단맛과 스모크가 한층 진해진 버전.", "tags": ["피트·스모키 애호가", "버번·바닐라 선호", "개성파·실험적 풍미 선호"], "similar": ["Laphroaig 10y", "Laphroaig PX", "Ardbeg Uigeadail"]}, {"cat": "Islay", "en": "Laphroaig PX", "kr": "라프로익 PX", "price": "₩18,000", "desc": "페드로 히메네즈 셰리 캐스크 피니시로 스모크와 진한 건포도 단맛이 동시에 느껴지는 라인.", "tags": ["피트·스모키 애호가", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["Laphroaig Quarter Cask", "Ardbeg Uigeadail", "Kilchoman Loch Gorm"]}, {"cat": "Islay", "en": "Ardbeg An Oa", "kr": "아드벡 안 오", "price": "₩19,000", "desc": "여러 캐스크 블렌딩으로 한층 부드럽고 둥글게 다듬어진, 아드벡 중 가장 마시기 편한 라인.", "tags": ["피트·스모키 애호가", "가벼운 입문용", "가성비 선호"], "similar": ["Ardbeg 10y", "Bowmore 12y", "Laphroaig Oak Select"]}, {"cat": "Islay", "en": "Talisker 8y SR", "kr": "탈리스커 SR 8년", "price": "₩19,000", "desc": "스톰 한정판 계보, 짠맛과 스파이스가 강렬하게 살아있는 캐스크 스트랭스급 풍미.", "tags": ["피트·스모키 애호가", "카스크스트랭스(고도수) 선호", "오일리·해양성 선호"], "similar": ["Talisker 10y", "Talisker Port Ruighe", "Octomore 14.1"]}, {"cat": "Islay", "en": "Caol Ila DE", "kr": "쿨일라 DE", "price": "₩19,000", "desc": "디스틸러스 에디션, 와인 캐스크 피니시로 산뜻한 과일향이 스모크에 더해진 라인.", "tags": ["피트·스모키 애호가", "트로피컬 과일향 선호", "오일리·해양성 선호"], "similar": ["Caol Ila 12y", "Bruichladdich Port Charlotte", "Talisker Port Ruighe"]}, {"cat": "Islay", "en": "Bruichladdich Port Charlotte", "kr": "브룩라디 포트샬롯", "price": "₩20,000", "desc": "브룩라디의 피트 라인, 스모크와 함께 미네랄한 바다 짠맛이 깔끔하게 느껴진다.", "tags": ["피트·스모키 애호가", "오일리·해양성 선호", "개성파·실험적 풍미 선호"], "similar": ["Caol Ila DE", "Kilchoman Machir Bay", "Bowmore 15y"]}, {"cat": "Islay", "en": "Talisker Port Ruighe", "kr": "탈리스커 포트뤼", "price": "₩20,000", "desc": "포트 와인 캐스크 피니시로 베리류 단맛이 짠맛, 스모크와 화려하게 어우러지는 라인.", "tags": ["피트·스모키 애호가", "트로피컬 과일향 선호", "개성파·실험적 풍미 선호"], "similar": ["Talisker 10y", "Talisker 8y SR", "Ardbeg Uigeadail"]}, {"cat": "Islay", "en": "Kilchoman Sanaig", "kr": "킬호만 사닉", "price": "₩20,000", "desc": "셰리 캐스크 비중을 높여 스모크와 진한 단맛이 함께 느껴지는 킬호만의 개성 있는 라인.", "tags": ["피트·스모키 애호가", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["Kilchoman Machir Bay", "Kilchoman Loch Gorm", "Laphroaig PX"]}, {"cat": "Islay", "en": "Kilchoman Machir Bay", "kr": "킬호만 마키어 베이", "price": "₩21,000", "desc": "버번+셰리 캐스크 조합, 신생 증류소 특유의 신선하고 펑키한 스모크가 매력적이다.", "tags": ["피트·스모키 애호가", "개성파·실험적 풍미 선호", "오일리·해양성 선호"], "similar": ["Kilchoman Sanaig", "Bruichladdich Port Charlotte", "Ardbeg An Oa"]}, {"cat": "Islay", "en": "Bowmore 15y", "kr": "보모어 15년", "price": "₩22,000", "desc": "셰리 캐스크 피니시 '다크스트 인카네이션', 진한 단맛과 스모크가 균형 있게 어우러진다.", "tags": ["피트·스모키 애호가", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Bowmore 12y", "Bowmore 18y A/M", "Laphroaig PX"]}, {"cat": "Islay", "en": "Lagavulin 16y", "kr": "라가불린 16년", "price": "₩24,000", "desc": "아일라를 대표하는 클래식, 짙은 피트와 셰리 단맛, 짠맛이 완벽하게 균형 잡힌 명작.", "tags": ["피트·스모키 애호가", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Lagavulin 8y", "Ardbeg Uigeadail", "Talisker 18y"]}, {"cat": "Islay", "en": "Ardbeg Uigeadail", "kr": "아드벡 우거다일", "price": "₩25,000", "desc": "셰리 캐스크와 버번 캐스크의 조합, 강렬한 피트와 진한 건포도 단맛이 동시에 느껴지는 명작.", "tags": ["피트·스모키 애호가", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Lagavulin 16y", "Laphroaig PX", "Ardbeg Corryvreckan"]}, {"cat": "Islay", "en": "Ardbeg Corryvreckan", "kr": "아드벡 코리브레칸", "price": "₩29,000", "desc": "캐스크 스트랭스급 도수, 타르와 후추, 강렬한 스모크가 폭발하는 아드벡 마니아용 한 잔.", "tags": ["피트·스모키 애호가", "카스크스트랭스(고도수) 선호", "개성파·실험적 풍미 선호"], "similar": ["Ardbeg Uigeadail", "Octomore 14.2", "Kilchoman Loch Gorm"]}, {"cat": "Islay", "en": "Ardbeg Smokiverse", "kr": "아드벡 스모키버스", "price": "₩30,000", "desc": "아드벡의 우주 테마 한정판, 독특한 캐스크 활용과 강렬한 스모크가 어우러진 실험적 보틀링.", "tags": ["피트·스모키 애호가", "한정판·희소가치 선호", "개성파·실험적 풍미 선호"], "similar": ["Ardbeg Smoketrails", "Ardbeg Anthology 13y", "Octomore 14.1"]}, {"cat": "Islay", "en": "Kilchoman Loch Gorm", "kr": "킬호만 로크 곰", "price": "₩33,000", "desc": "100% 셰리 캐스크 숙성, 스모크와 진한 건과일 단맛이 강렬하게 어우러지는 한정 라인.", "tags": ["피트·스모키 애호가", "셰리캐스크·단맛 선호", "한정판·희소가치 선호"], "similar": ["Laphroaig PX", "Ardbeg Uigeadail", "Kilchoman Sanaig"]}, {"cat": "Islay", "en": "Laphroaig Lore", "kr": "라프로익 로어", "price": "₩33,000", "desc": "여러 숙성연수 원액을 블렌딩한 묵직한 버전, 강렬한 피트와 깊은 보디감이 인상적이다.", "tags": ["피트·스모키 애호가", "묵직한 디저트 페어링", "개성파·실험적 풍미 선호"], "similar": ["Laphroaig PX", "Ardbeg Corryvreckan", "Talisker 18y"]}, {"cat": "Islay", "en": "Ardbeg Anthology 13y", "kr": "아드벡 앤솔로지 13년", "price": "₩36,000", "desc": "한정 13년 숙성, 클래식 아드벡 스모크에 한층 깊어진 복합미가 더해진 컬렉터용 라인.", "tags": ["한정판·희소가치 선호", "피트·스모키 애호가", "개성파·실험적 풍미 선호"], "similar": ["Ardbeg Smokiverse", "Octomore 14.2", "Caol Ila 25y"]}, {"cat": "Islay", "en": "Bowmore 18y A/M", "kr": "보모어 애스톤마틴 18년", "price": "₩39,000", "desc": "애스톤마틴 콜라보 18년, 깊은 셰리 단맛과 스모크가 우아하게 어우러지는 프레스티지 라인.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "피트·스모키 애호가"], "similar": ["Bowmore 15y", "Talisker 18y", "Glendronach 16y"]}, {"cat": "Islay", "en": "Bunnahabhain 12y CS", "kr": "부나하벤 12년 CS", "price": "₩40,000", "desc": "캐스크 스트랭스로 즐기는 부나하벤, 짠맛과 셰리 단맛이 도수 그대로 강렬하게 다가온다.", "tags": ["카스크스트랭스(고도수) 선호", "셰리캐스크·단맛 선호", "오일리·해양성 선호"], "similar": ["Bunnahabhain 12y", "GlenAllachie 10y CS", "Aberlour A'bunadh"]}, {"cat": "Islay", "en": "Talisker 18y", "kr": "탈리스커 18년", "price": "₩45,000", "desc": "스파이스와 짠맛, 스모크가 깊고 우아하게 균형을 이루는 탈리스커의 플래그십 숙성 라인.", "tags": ["피트·스모키 애호가", "우디·스파이시 선호", "한정판·희소가치 선호"], "similar": ["Talisker 10y", "Lagavulin 16y", "Laphroaig Lore"]}, {"cat": "Islay", "en": "Octomore 14.2", "kr": "옥토모어 14.2", "price": "₩55,000", "desc": "세계 최고 수준의 피트 함량, 압도적인 스모크와 타르 풍미가 폭발하는 익스트림 피트 몰트.", "tags": ["피트·스모키 애호가", "카스크스트랭스(고도수) 선호", "개성파·실험적 풍미 선호"], "similar": ["Octomore 14.1", "Octomore .1.2 (Weekly)", "Ardbeg Corryvreckan"]}, {"cat": "Islay", "en": "Octomore 14.1", "kr": "옥토모어 14.1", "price": "₩55,000", "desc": "옥토모어 표준 캐스크 버전, 강렬한 피트와 깔끔한 보리 단맛의 밸런스가 돋보인다.", "tags": ["피트·스모키 애호가", "카스크스트랭스(고도수) 선호", "개성파·실험적 풍미 선호"], "similar": ["Octomore 14.2", "Octomore .1.2 (Weekly)", "Ardbeg Smokiverse"]}, {"cat": "Islay", "en": "Caol Ila 25y", "kr": "쿨일라 25년", "price": "₩80,000", "desc": "25년 장기 숙성, 부드러워진 스모크 속 깊고 복합적인 풍미가 펼쳐지는 희소 보틀링.", "tags": ["한정판·희소가치 선호", "피트·스모키 애호가", "묵직한 디저트 페어링"], "similar": ["Ardbeg Anthology 13y", "Talisker 18y", "Bowmore 18y A/M"]}, {"cat": "Island", "en": "Arran 10y", "kr": "아란 10년", "price": "₩16,000", "desc": "가벼운 과일향과 바다 바람 같은 산뜻함이 특징인 아란섬의 입문용 몰트.", "tags": ["가벼운 입문용", "오일리·해양성 선호", "가성비 선호"], "similar": ["Old Pulteney 12y", "Arran Barrel Reserve Malt", "Highland Park 12y"]}, {"cat": "Island", "en": "Arran Barrel Reserve Malt", "kr": "아란 베럴 리저브 몰트", "price": "₩16,000", "desc": "버번 캐스크 풀숙성, 바닐라와 가벼운 꿀 단맛이 산뜻하게 느껴지는 가성비 좋은 몰트.", "tags": ["가벼운 입문용", "버번·바닐라 선호", "가성비 선호"], "similar": ["Arran 10y", "Arran Quarter Cask", "Deanston 12y"]}, {"cat": "Island", "en": "Highland Park 12y", "kr": "하일랜드 파크 12년", "price": "₩18,000", "desc": "헤더 꿀과 은은한 스모크, 오렌지 풍미가 균형 있게 어우러지는 오크니의 대표 몰트.", "tags": ["피트·스모키 애호가", "가벼운 입문용", "셰리캐스크·단맛 선호"], "similar": ["Highland Park 15y", "Arran 10y", "Talisker 10y"]}, {"cat": "Island", "en": "Arran Quarter Cask", "kr": "아란 쿼터 캐스크", "price": "₩20,000", "desc": "작은 쿼터캐스크 숙성으로 오크 풍미가 진해진, 바닐라와 스파이스가 매력적인 라인.", "tags": ["우디·스파이시 선호", "버번·바닐라 선호", "가성비 선호"], "similar": ["Arran Barrel Reserve Malt", "Arran Machrie Moor CS", "Laphroaig Quarter Cask"]}, {"cat": "Island", "en": "Arran Port Cask Finish", "kr": "아란 포트 캐스크 피니쉬", "price": "₩23,000", "desc": "포트 와인 캐스크 피니시로 베리류 과일잼 같은 화려한 단맛이 더해진 몰트.", "tags": ["트로피컬 과일향 선호", "셰리캐스크·단맛 선호", "개성파·실험적 풍미 선호"], "similar": ["Arran Amarone Cask Finish", "Arran Sauternes Cask Finish", "Glendronach PortWood"]}, {"cat": "Island", "en": "Arran Amarone Cask Finish", "kr": "아란 아마로네 캐스크 피니쉬", "price": "₩23,000", "desc": "이탈리아 아마로네 와인 캐스크 피니시, 진한 체리와 다크 베리 풍미가 인상적이다.", "tags": ["트로피컬 과일향 선호", "개성파·실험적 풍미 선호", "셰리캐스크·단맛 선호"], "similar": ["Arran Port Cask Finish", "GlenAllachie Cuvée Cask", "Arran Sherry Cask"]}, {"cat": "Island", "en": "Arran Sauternes Cask Finish", "kr": "아란 소테른 캐스크 피니쉬", "price": "₩24,000", "desc": "소테른 디저트 와인 캐스크 피니시로 살구, 꿀 같은 화려한 단맛이 돋보이는 몰트.", "tags": ["트로피컬 과일향 선호", "묵직한 디저트 페어링", "개성파·실험적 풍미 선호"], "similar": ["Glenmorangie Nectar D'Or", "Arran Amarone Cask Finish", "Balvenie Madeira Cask 15y"]}, {"cat": "Island", "en": "Arran Machrie Moor CS", "kr": "아란 마크리무어 CS", "price": "₩25,000", "desc": "피트 처리 보리를 사용한 캐스크 스트랭스 버전, 스모크와 강한 도수가 동시에 느껴진다.", "tags": ["피트·스모키 애호가", "카스크스트랭스(고도수) 선호", "개성파·실험적 풍미 선호"], "similar": ["Arran Quarter Cask", "Highland Park 16y", "Talisker 8y SR"]}, {"cat": "Island", "en": "Highland Park 15y", "kr": "하일랜드 파크 15년", "price": "₩25,000", "desc": "12년보다 깊어진 헤더 꿀, 스모크, 셰리 단맛의 조화가 한층 우아해진 몰트.", "tags": ["피트·스모키 애호가", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Highland Park 12y", "Highland Park 16y", "Bowmore 15y"]}, {"cat": "Island", "en": "Highland Park 16y", "kr": "하일랜드 파크 16년", "price": "₩25,000", "desc": "바이킹 시리즈, 깊어진 셰리 단맛과 은은한 스모크가 복합적으로 펼쳐지는 숙성 라인.", "tags": ["피트·스모키 애호가", "셰리캐스크·단맛 선호", "한정판·희소가치 선호"], "similar": ["Highland Park 15y", "Arran Machrie Moor CS", "Bowmore 18y A/M"]}, {"cat": "Island", "en": "Arran Sherry Cask", "kr": "아란 셰리 캐스크", "price": "₩26,000", "desc": "셰리 캐스크 풀숙성으로 건포도와 캐러멜 단맛이 진하게 느껴지는 아란의 셰리 라인.", "tags": ["셰리캐스크·단맛 선호", "묵직한 디저트 페어링", "트로피컬 과일향 선호"], "similar": ["Arran Amarone Cask Finish", "Glenfarclas 12y", "Macallan Sherry Cask 12y"]}, {"cat": "Blended", "en": "Johnnie Walker Black Label", "kr": "조니워커 블랙라벨", "price": "₩12,000", "desc": "꿀, 바닐라에 은은한 스모크가 더해진 블렌디드의 정석, 누구에게나 무난한 첫 선택.", "tags": ["가벼운 입문용", "하이볼·가볍게", "가성비 선호"], "similar": ["Dewar's 12y", "Ballantine's 12y", "Monkey Shoulder"]}, {"cat": "Blended", "en": "Ballantine's 12y", "kr": "발렌타인 12년", "price": "₩13,000", "desc": "꽃향과 꿀, 부드러운 몰트감이 조화로운 가볍고 마시기 편한 블렌디드.", "tags": ["가벼운 입문용", "하이볼·가볍게", "가성비 선호"], "similar": ["Johnnie Walker Black Label", "Dewar's 12y", "Ballantine's 17y"]}, {"cat": "Blended", "en": "Dewar's 12y", "kr": "듀어스 12년", "price": "₩14,000", "desc": "더블 에이징 공법으로 부드럽게 다듬어진 꿀과 바닐라 풍미의 데일리 블렌디드.", "tags": ["가벼운 입문용", "하이볼·가볍게", "가성비 선호"], "similar": ["Johnnie Walker Black Label", "Ballantine's 12y", "Dewar's 15y"]}, {"cat": "Blended", "en": "Johnnie Walker Gold Label", "kr": "조니워커 골드라벨", "price": "₩16,000", "desc": "클라가호스 18년 컨셉을 잇는 라인, 꿀과 과일향이 한층 풍성하게 느껴지는 블렌디드.", "tags": ["가벼운 입문용", "셰리캐스크·단맛 선호", "트로피컬 과일향 선호"], "similar": ["Johnnie Walker Black Label Old", "Dewar's 15y", "Royal Salute 21y"]}, {"cat": "Blended", "en": "Dewar's 15y", "kr": "듀어스 15년", "price": "₩16,000", "desc": "12년보다 깊어진 꿀과 견과류 단맛, 부드러운 오크 피니시가 특징인 블렌디드.", "tags": ["가벼운 입문용", "셰리캐스크·단맛 선호", "가성비 선호"], "similar": ["Dewar's 12y", "Dewar's 18y", "Ballantine's 17y"]}, {"cat": "Blended", "en": "Johnnie Walker Green Label", "kr": "조니워커 그린라벨", "price": "₩16,000", "desc": "100% 몰트 블렌딩으로 탈리스커, 라가불린 등의 개성이 살아있는 독특한 라인.", "tags": ["개성파·실험적 풍미 선호", "피트·스모키 애호가", "가벼운 입문용"], "similar": ["Johnnie Walker Black Label", "Highland Park 12y", "Talisker 10y"]}, {"cat": "Blended", "en": "Dewar's 18y", "kr": "듀어스 18년", "price": "₩21,000", "desc": "더블 에이징의 깊이가 더해진 18년, 진한 꿀과 견과류, 부드러운 스파이스가 느껴진다.", "tags": ["셰리캐스크·단맛 선호", "우디·스파이시 선호", "가성비 선호"], "similar": ["Dewar's 15y", "Ballantine's 21y", "Johnnie Walker Gold Label"]}, {"cat": "Blended", "en": "Ballantine's 17y", "kr": "발렌타인 17년", "price": "₩23,000", "desc": "꽃향과 꿀, 부드러운 스모크가 우아하게 어우러지는 발렌타인의 프리미엄 라인.", "tags": ["셰리캐스크·단맛 선호", "우디·스파이시 선호", "가벼운 입문용"], "similar": ["Ballantine's 12y", "Dewar's 18y", "Ballantine's 21y"]}, {"cat": "Blended", "en": "Johnnie Walker Black Label Old", "kr": "조니워커 블랙라벨 올드", "price": "₩30,000", "desc": "블랙라벨의 빈티지·고숙성 버전, 한층 깊고 클래식한 스모크와 단맛의 조화.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "피트·스모키 애호가"], "similar": ["Johnnie Walker Black Label", "Johnnie Walker Gold Label", "Ballantine's 21y"]}, {"cat": "Blended", "en": "Ballantine's 21y", "kr": "발렌타인 21년", "price": "₩31,000", "desc": "21년 숙성 원액의 깊이, 부드러운 오크와 건과일 단맛이 우아하게 펼쳐지는 프리미엄 블렌디드.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Ballantine's 17y", "Royal Salute 21y", "Dewar's 18y"]}, {"cat": "Blended", "en": "Royal Salute 21y", "kr": "로얄 살루트 21년", "price": "₩36,000", "desc": "엘리자베스 2세 대관식을 기념해 만들어진 21년 숙성 블렌디드, 벌꿀과 오렌지의 우아한 단맛.", "tags": ["한정판·희소가치 선호", "셰리캐스크·단맛 선호", "묵직한 디저트 페어링"], "similar": ["Royal Salute 21y (Weekly)", "Ballantine's 21y", "Royal Salute 25y"]}, {"cat": "Blended", "en": "Johnnie Walker Blue Label", "kr": "조니워커 블루라벨", "price": "₩36,000", "desc": "희소 원액만을 블렌딩한 프레스티지 라인, 부드러운 스모크와 깊은 단맛의 정점.", "tags": ["한정판·희소가치 선호", "묵직한 디저트 페어링", "개성파·실험적 풍미 선호"], "similar": ["Johnnie Walker Black Label Old", "Royal Salute 21y", "Ballantine's 30y"]}, {"cat": "Blended", "en": "Ballantine's 30y", "kr": "발렌타인 30년", "price": "₩55,000", "desc": "30년 숙성의 깊이, 다크 초콜릿과 건포도, 긴 여운의 우디함이 인상적인 프레스티지 블렌디드.", "tags": ["한정판·희소가치 선호", "우디·스파이시 선호", "묵직한 디저트 페어링"], "similar": ["Ballantine's 30y (Weekly)", "Johnnie Walker Blue Label", "Royal Salute 25y"]}, {"cat": "Blended", "en": "Royal Salute 25y", "kr": "로얄 살루트 25년", "price": "₩70,000", "desc": "25년 숙성 원액의 풍부함, 벌꿀과 건과일, 깊은 오크가 조화롭게 어우러지는 프레스티지 라인.", "tags": ["한정판·희소가치 선호", "묵직한 디저트 페어링", "셰리캐스크·단맛 선호"], "similar": ["Royal Salute 21y", "Royal Salute 32y", "Ballantine's 30y"]}, {"cat": "Blended", "en": "Royal Salute 32y", "kr": "로얄 살루트 32년", "price": "₩100,000", "desc": "로얄살루트의 최상위 라인, 32년 숙성의 깊고 복합적인 풍미를 즐기는 궁극의 한 잔.", "tags": ["한정판·희소가치 선호", "묵직한 디저트 페어링", "개성파·실험적 풍미 선호"], "similar": ["Royal Salute 25y", "Hibiki 21", "Glenfarclas 25y"]}, {"cat": "Bourbon", "en": "Buffalo Trace", "kr": "버팔로 트레이스", "price": "₩13,000", "desc": "바닐라와 캐러멜, 부드러운 단맛의 정석 — 버번 입문자에게 가장 무난한 선택.", "tags": ["가벼운 입문용", "버번·바닐라 선호", "가성비 선호"], "similar": ["Maker's Mark", "Wild Turkey 8y", "1792 Small Batch"]}, {"cat": "Bourbon", "en": "Maker's Mark", "kr": "메이커스 마크", "price": "₩13,000", "desc": "밀을 사용한 부드러운 매시빌, 캐러멜과 바닐라의 둥글고 달콤한 풍미가 특징.", "tags": ["가벼운 입문용", "버번·바닐라 선호", "가성비 선호"], "similar": ["Buffalo Trace", "Maker's Mark CS", "Rowan's Creek"]}, {"cat": "Bourbon", "en": "Wild Turkey 8y", "kr": "와일드터키 8년", "price": "₩15,000", "desc": "높은 라이 비중으로 스파이시함이 살아있는 묵직한 버번, 캐러멜과 후추향이 동시에.", "tags": ["우디·스파이시 선호", "버번·바닐라 선호", "가성비 선호"], "similar": ["Wild Turkey Rare Breed", "Russell's Reserve 10y", "Knob Creek 9y"]}, {"cat": "Bourbon", "en": "1792 Small Batch", "kr": "1792 스몰배치", "price": "₩15,000", "desc": "높은 도수와 스파이시한 라이감, 캐러멜 단맛이 균형 있게 어우러지는 스몰배치 버번.", "tags": ["우디·스파이시 선호", "버번·바닐라 선호", "가성비 선호"], "similar": ["Buffalo Trace", "Four Roses Small Batch", "Knob Creek 9y"]}, {"cat": "Bourbon", "en": "Russell's Reserve 10y", "kr": "러셀 리저브 10년", "price": "₩15,000", "desc": "와일드터키 가문의 프리미엄 라인, 오크와 캐러멜의 깊은 맛이 균형 잡힌 버번.", "tags": ["버번·바닐라 선호", "우디·스파이시 선호", "가성비 선호"], "similar": ["Wild Turkey 8y", "Russell's Reserve Single Barrel", "Russell's Reserve Rye"]}, {"cat": "Bourbon", "en": "Knob Creek 9y", "kr": "놉크릭 9년", "price": "₩15,000", "desc": "캐스크 스트랭스에 가까운 묵직한 보디감, 오크와 캐러멜의 진한 단맛이 특징.", "tags": ["버번·바닐라 선호", "우디·스파이시 선호", "가성비 선호"], "similar": ["1792 Small Batch", "Wild Turkey 8y", "Noah's Mill"]}, {"cat": "Bourbon", "en": "Four Roses Small Batch", "kr": "포 로지스 스몰배치", "price": "₩16,000", "desc": "4가지 원액 블렌딩, 과일향과 스파이스가 부드럽게 조화를 이루는 클래식 버번.", "tags": ["버번·바닐라 선호", "시트러스·산미 선호", "가성비 선호"], "similar": ["1792 Small Batch", "Woodford Reserve", "Michter's Small Batch"]}, {"cat": "Bourbon", "en": "Michter's Unblended", "kr": "믹터스 언블렌디드", "price": "₩17,000", "desc": "단일 매시빌, 깨끗한 캐러멜과 바닐라 풍미가 부드럽게 느껴지는 프리미엄 버번.", "tags": ["버번·바닐라 선호", "가벼운 입문용", "가성비 선호"], "similar": ["Woodford Reserve", "Michter's Small Batch", "Michter's Sour Mash"]}, {"cat": "Bourbon", "en": "Woodford Reserve Rye", "kr": "우드포드 리저브 라이", "price": "₩17,000", "desc": "라이 위스키 특유의 스파이시하고 드라이한 풍미가 도드라지는 칵테일 베이스로도 인기.", "tags": ["우디·스파이시 선호", "개성파·실험적 풍미 선호", "가성비 선호"], "similar": ["Russell's Reserve Rye", "Town Branch Rye", "Michter's Sour Mash"]}, {"cat": "Bourbon", "en": "Russell's Reserve Single Barrel", "kr": "러셀 리저브 싱글배럴", "price": "₩17,000", "desc": "단일 배럴 병입으로 캐스크 개성이 살아있는 진한 캐러멜과 오크 풍미.", "tags": ["버번·바닐라 선호", "우디·스파이시 선호", "개성파·실험적 풍미 선호"], "similar": ["Russell's Reserve 10y", "Knob Creek 9y", "Wild Turkey Rare Breed"]}, {"cat": "Bourbon", "en": "Woodford Reserve", "kr": "우드포드 리저브", "price": "₩17,000", "desc": "초콜릿, 바닐라, 가벼운 과일향이 우아하게 어우러지는 부드러운 프리미엄 버번.", "tags": ["버번·바닐라 선호", "가벼운 입문용", "시트러스·산미 선호"], "similar": ["Four Roses Small Batch", "Michter's Unblended", "Town Branch Bourbon"]}, {"cat": "Bourbon", "en": "Michter's Small Batch", "kr": "믹터스 스몰 배치", "price": "₩17,000", "desc": "캐러멜과 바닐라, 부드러운 오크가 깔끔하게 어우러지는 믹터스의 스탠다드 버번.", "tags": ["버번·바닐라 선호", "가벼운 입문용", "가성비 선호"], "similar": ["Michter's Unblended", "Michter's Sour Mash", "Four Roses Small Batch"]}, {"cat": "Bourbon", "en": "Jack Daniel Single Barrel", "kr": "잭다니엘 싱글배럴", "price": "₩18,000", "desc": "테네시 위스키 특유의 차콜 멜로잉, 진한 캐러멜과 바닐라가 묵직하게 느껴진다.", "tags": ["버번·바닐라 선호", "우디·스파이시 선호", "개성파·실험적 풍미 선호"], "similar": ["Wild Turkey Rare Breed", "Noah's Mill", "Russell's Reserve Single Barrel"]}, {"cat": "Bourbon", "en": "Town Branch Rye", "kr": "타운 브렌치 라이", "price": "₩18,000", "desc": "켄터키 라이 위스키, 스파이시하고 드라이한 끝맛이 칵테일에도 잘 어울린다.", "tags": ["우디·스파이시 선호", "개성파·실험적 풍미 선호", "가성비 선호"], "similar": ["Woodford Reserve Rye", "Russell's Reserve Rye", "Michter's Sour Mash"]}, {"cat": "Bourbon", "en": "Town Branch Bourbon", "kr": "타운 브렌치 버번", "price": "₩18,000", "desc": "버번 캐스크에 몰트 위스키 기법을 더한 독특한 양조, 부드러운 단맛과 개성이 공존.", "tags": ["개성파·실험적 풍미 선호", "버번·바닐라 선호", "가성비 선호"], "similar": ["Woodford Reserve", "Four Roses Small Batch", "VHW Port Cask"]}, {"cat": "Bourbon", "en": "Russell's Reserve Rye", "kr": "러셀 리저브 라이", "price": "₩18,000", "desc": "와일드터키 가문의 라이 위스키, 스파이시함과 캐러멜 단맛의 균형이 좋다.", "tags": ["우디·스파이시 선호", "버번·바닐라 선호", "가성비 선호"], "similar": ["Town Branch Rye", "Woodford Reserve Rye", "Russell's Reserve Single Barrel"]}, {"cat": "Bourbon", "en": "1776 James E. Pepper Bourbon", "kr": "1776 제임스 E 페퍼 버번", "price": "₩19,000", "desc": "역사적인 페퍼 가문의 레시피를 잇는 버번, 스파이스와 캐러멜의 클래식한 조화.", "tags": ["버번·바닐라 선호", "우디·스파이시 선호", "개성파·실험적 풍미 선호"], "similar": ["1792 Small Batch", "Rowan's Creek", "Noah's Mill"]}, {"cat": "Bourbon", "en": "VHW Port Cask", "kr": "VHW 포트캐스크", "price": "₩19,000", "desc": "포트 와인 캐스크 피니시로 베리류 단맛이 버번 본연의 캐러멜에 화려하게 더해진다.", "tags": ["트로피컬 과일향 선호", "버번·바닐라 선호", "개성파·실험적 풍미 선호"], "similar": ["Town Branch Bourbon", "Balvenie Caribbean Cask 14y", "Booker's 2022"]}, {"cat": "Bourbon", "en": "Michter's Sour Mash", "kr": "믹터스 사워 매시", "price": "₩19,000", "desc": "전통 사워매시 공법, 부드러운 산미와 캐러멜 단맛이 독특하게 어우러지는 라인.", "tags": ["개성파·실험적 풍미 선호", "버번·바닐라 선호", "시트러스·산미 선호"], "similar": ["Michter's Small Batch", "Woodford Reserve Rye", "Michter's Unblended"]}, {"cat": "Bourbon", "en": "Rowan's Creek", "kr": "로완스 크릭", "price": "₩19,000", "desc": "고연산 소량 생산, 진한 캐러멜과 오크 스파이스가 묵직하게 느껴지는 크래프트 버번.", "tags": ["버번·바닐라 선호", "우디·스파이시 선호", "개성파·실험적 풍미 선호"], "similar": ["1776 James E. Pepper Bourbon", "Noah's Mill", "Knob Creek 9y"]}, {"cat": "Bourbon", "en": "Maker's Mark CS", "kr": "메이커스 마크 CS", "price": "₩20,000", "desc": "캐스크 스트랭스로 즐기는 메이커스 마크, 밀 베이스의 부드러움이 도수 그대로 살아있다.", "tags": ["카스크스트랭스(고도수) 선호", "버번·바닐라 선호", "개성파·실험적 풍미 선호"], "similar": ["Maker's Mark", "Wild Turkey Rare Breed", "Booker's 2022"]}, {"cat": "Bourbon", "en": "Wild Turkey Rare Breed", "kr": "와일드터키 레어브리드", "price": "₩20,000", "desc": "캐스크 스트랭스 버번, 후추 스파이스와 캐러멜이 강렬하게 폭발하는 마니아용 한 잔.", "tags": ["카스크스트랭스(고도수) 선호", "우디·스파이시 선호", "개성파·실험적 풍미 선호"], "similar": ["Maker's Mark CS", "Booker's 2022", "Knob Creek 9y"]}, {"cat": "Bourbon", "en": "Noah's Mill", "kr": "노아스 밀", "price": "₩25,000", "desc": "여러 배럴을 블렌딩한 고도수 소량생산 버번, 진한 캐러멜과 견과류 풍미가 인상적.", "tags": ["카스크스트랭스(고도수) 선호", "버번·바닐라 선호", "개성파·실험적 풍미 선호"], "similar": ["Rowan's Creek", "Jack Daniel Single Barrel", "Booker's 2022"]}, {"cat": "Bourbon", "en": "Booker's 2022", "kr": "부커스 2022", "price": "₩35,000", "desc": "짐빔 가문의 무희석·무냉각여과 캐스크 스트랭스, 강렬한 오크와 캐러멜의 정점.", "tags": ["카스크스트랭스(고도수) 선호", "한정판·희소가치 선호", "우디·스파이시 선호"], "similar": ["Wild Turkey Rare Breed", "Noah's Mill", "Shenk's 2022"]}, {"cat": "Bourbon", "en": "Shenk's 2022", "kr": "쉥크스 2022", "price": "₩50,000", "desc": "마이커스 위스키 컴퍼니의 한정 라인, 깊고 부드러운 캐러멜과 오크의 프리미엄 한 잔.", "tags": ["한정판·희소가치 선호", "버번·바닐라 선호", "묵직한 디저트 페어링"], "similar": ["Booker's 2022", "Michter's Unblended", "VHW Port Cask"]}, {"cat": "Japan", "en": "Suntory Yamazaki DR", "kr": "산토리 야마자키 DR", "price": "₩26,000", "desc": "디스틸러스 리저브, 베리류 과일과 화이트 오크의 산뜻함이 균형 잡힌 산토리의 입문 라인.", "tags": ["가벼운 입문용", "트로피컬 과일향 선호", "시트러스·산미 선호"], "similar": ["Hakushu DR", "Hibiki Harmony", "Suntory Yamazaki 12y"]}, {"cat": "Japan", "en": "Hakushu DR", "kr": "하쿠슈 DR", "price": "₩26,000", "desc": "숲속을 연상시키는 허브향과 산뜻한 민트, 가벼운 스모크가 어우러지는 하쿠슈 스탠다드.", "tags": ["가벼운 입문용", "오일리·해양성 선호", "시트러스·산미 선호"], "similar": ["Suntory Yamazaki DR", "Hakushu Bittersweet", "Yoichi"]}, {"cat": "Japan", "en": "Hibiki Harmony", "kr": "히비키 하모니", "price": "₩29,000", "desc": "여러 증류소 원액을 블렌딩한 부드럽고 화사한 풍미, 일본 위스키 입문 시 가장 추천되는 라인.", "tags": ["가벼운 입문용", "트로피컬 과일향 선호", "하이볼·가볍게"], "similar": ["Hibiki Blender's Choice", "Hibiki Master Select", "Suntory Yamazaki DR"]}, {"cat": "Japan", "en": "Yoichi", "kr": "요이치", "price": "₩29,000", "desc": "스코틀랜드 전통 방식을 따른 묵직한 보디감, 은은한 스모크와 짠맛이 매력적인 일본 몰트.", "tags": ["피트·스모키 애호가", "오일리·해양성 선호", "개성파·실험적 풍미 선호"], "similar": ["Hakushu DR", "Yoichi Miyagikyo", "Talisker 10y"]}, {"cat": "Japan", "en": "Hibiki Blender's Choice", "kr": "히비키 블렌더스 초이스", "price": "₩31,000", "desc": "블렌더의 개성이 담긴 한정 라인, 하모니보다 한층 진한 단맛과 깊이가 느껴진다.", "tags": ["한정판·희소가치 선호", "트로피컬 과일향 선호", "셰리캐스크·단맛 선호"], "similar": ["Hibiki Harmony", "Hibiki Master Select", "Hibiki 21"]}, {"cat": "Japan", "en": "Hibiki Master Select", "kr": "히비키 마스터 셀렉트", "price": "₩31,000", "desc": "마스터 블렌더가 선별한 원액 구성, 화사한 과일향과 부드러운 단맛이 돋보이는 라인.", "tags": ["한정판·희소가치 선호", "트로피컬 과일향 선호", "셰리캐스크·단맛 선호"], "similar": ["Hibiki Blender's Choice", "Hibiki Harmony", "Hibiki 21"]}, {"cat": "Japan", "en": "Yoichi Miyagikyo", "kr": "요이치 미야기쿄", "price": "₩35,000", "desc": "요이치와 미야기쿄 두 증류소 원액의 블렌딩, 스모크와 과일향이 동시에 느껴지는 독특한 구성.", "tags": ["개성파·실험적 풍미 선호", "피트·스모키 애호가", "트로피컬 과일향 선호"], "similar": ["Yoichi", "Hakushu Bittersweet", "Suntory Yamazaki Smoky Batch"]}, {"cat": "Japan", "en": "Suntory Yamazaki 12y", "kr": "산토리 야마자키 12년", "price": "₩39,000", "desc": "일본 위스키의 대표주자, 복숭아·파인애플 같은 화려한 과일향과 미즈나라 오크향이 특징.", "tags": ["트로피컬 과일향 선호", "한정판·희소가치 선호", "시트러스·산미 선호"], "similar": ["Suntory Yamazaki DR", "Suntory Yamazaki Smoky Batch", "Hakushu Bittersweet"]}, {"cat": "Japan", "en": "Suntory Yamazaki Smoky Batch", "kr": "산토리 야마자키 스모키 배치", "price": "₩39,000", "desc": "야마자키 한정 배치, 평소보다 진한 스모크가 더해진 개성 있는 구성.", "tags": ["피트·스모키 애호가", "한정판·희소가치 선호", "개성파·실험적 풍미 선호"], "similar": ["Suntory Yamazaki 12y", "Yoichi Miyagikyo", "Hakushu Bittersweet"]}, {"cat": "Japan", "en": "Hakushu Bittersweet", "kr": "하쿠슈 비터스윗", "price": "₩39,000", "desc": "허브와 민트의 청량함에 비터한 다크 초콜릿 풍미가 더해진 하쿠슈의 한정 라인.", "tags": ["개성파·실험적 풍미 선호", "묵직한 디저트 페어링", "시트러스·산미 선호"], "similar": ["Hakushu DR", "Suntory Yamazaki Smoky Batch", "Yoichi Miyagikyo"]}, {"cat": "Japan", "en": "Hibiki 21", "kr": "히비키 21년", "price": "₩120,000", "desc": "히비키의 플래그십, 21년 숙성 원액들의 깊고 화려한 조화 — 일본 위스키의 정점.", "tags": ["한정판·희소가치 선호", "묵직한 디저트 페어링", "트로피컬 과일향 선호"], "similar": ["Hibiki Master Select", "Hibiki Blender's Choice", "Royal Salute 32y"]}, {"cat": "Australia", "en": "Starward Nova", "kr": "스타워드 노바", "price": "₩18,000", "desc": "호주 레드와인 캐스크 숙성으로 베리류 과일향과 스파이스가 산뜻하게 느껴지는 입문 라인.", "tags": ["가벼운 입문용", "트로피컬 과일향 선호", "개성파·실험적 풍미 선호"], "similar": ["Starward Fortis", "Starward Solera", "Arran Amarone Cask Finish"]}, {"cat": "Australia", "en": "Starward Fortis", "kr": "스타워드 포티스", "price": "₩21,000", "desc": "노바보다 진한 와인 캐스크 풍미, 다크 체리와 스파이스가 묵직하게 느껴지는 라인.", "tags": ["트로피컬 과일향 선호", "우디·스파이시 선호", "개성파·실험적 풍미 선호"], "similar": ["Starward Nova", "Starward Solera", "VHW Port Cask"]}, {"cat": "Australia", "en": "Starward Solera", "kr": "스타워드 솔레라", "price": "₩22,000", "desc": "솔레라 시스템으로 블렌딩, 한층 부드럽고 복합적인 와인캐스크 단맛이 매력적이다.", "tags": ["트로피컬 과일향 선호", "개성파·실험적 풍미 선호", "셰리캐스크·단맛 선호"], "similar": ["Starward Fortis", "Starward Nova", "GlenAllachie Cuvée Cask"]}, {"cat": "India", "en": "Amrut Indian", "kr": "암룻 인디안", "price": "₩16,000", "desc": "고온 숙성으로 빠르게 농축된 풍미, 진한 과일향과 스파이스가 인상적인 인도 몰트.", "tags": ["개성파·실험적 풍미 선호", "트로피컬 과일향 선호", "가성비 선호"], "similar": ["Amrut Fusion", "Amrut Peated", "Kavalan Solist Ex-Bourbon"]}, {"cat": "India", "en": "Amrut Peated", "kr": "암룻 피티드", "price": "₩18,000", "desc": "인도산 피트 보리를 사용, 스모크와 열대 과일향이 독특하게 어우러지는 개성 있는 몰트.", "tags": ["피트·스모키 애호가", "개성파·실험적 풍미 선호", "트로피컬 과일향 선호"], "similar": ["Amrut Indian", "Amrut Fusion", "Kavalan Solist Peated"]}, {"cat": "India", "en": "Amrut Fusion", "kr": "암룻 퓨젼", "price": "₩20,000", "desc": "인도산과 스코틀랜드산 피트 보리를 블렌딩, 스모크와 진한 과일향의 독특한 조화.", "tags": ["개성파·실험적 풍미 선호", "피트·스모키 애호가", "트로피컬 과일향 선호"], "similar": ["Amrut Peated", "Amrut Indian", "Kavalan Solist Peated"]}, {"cat": "Taiwan", "en": "Kavalan Solist Vinho Barrique", "kr": "카발란 솔리스트 비노바리끄", "price": "₩34,000", "desc": "레드와인 캐스크 싱글캐스크, 진한 베리류 과일과 스파이스가 화려하게 펼쳐진다.", "tags": ["트로피컬 과일향 선호", "카스크스트랭스(고도수) 선호", "개성파·실험적 풍미 선호"], "similar": ["Kavalan Solist Port", "Kavalan Solist Brandy", "Starward Fortis"]}, {"cat": "Taiwan", "en": "Kavalan Solist Port", "kr": "카발란 솔리스트 포트", "price": "₩34,000", "desc": "포트 와인 캐스크 싱글캐스크, 달콤한 베리잼과 다크 초콜릿 풍미가 진하게 느껴진다.", "tags": ["트로피컬 과일향 선호", "묵직한 디저트 페어링", "카스크스트랭스(고도수) 선호"], "similar": ["Kavalan Solist Vinho Barrique", "Kavalan Solist Oloroso Sherry", "Glendronach PortWood"]}, {"cat": "Taiwan", "en": "Kavalan Solist Ex-Bourbon", "kr": "카발란 솔리스트 엑스 버번", "price": "₩34,000", "desc": "버번 캐스크 싱글캐스크, 바닐라와 코코넛, 열대 과일향이 화려하게 폭발하는 카발란 스타일.", "tags": ["트로피컬 과일향 선호", "버번·바닐라 선호", "카스크스트랭스(고도수) 선호"], "similar": ["Amrut Indian", "Kavalan Solist Brandy", "Balvenie Caribbean Cask 14y"]}, {"cat": "Taiwan", "en": "Kavalan Solist Brandy", "kr": "카발란 솔리스트 브랜디", "price": "₩38,000", "desc": "브랜디 캐스크 피니시, 포도 풍미와 화려한 단맛이 더해진 카발란의 개성 있는 라인.", "tags": ["트로피컬 과일향 선호", "개성파·실험적 풍미 선호", "카스크스트랭스(고도수) 선호"], "similar": ["Kavalan Solist Ex-Bourbon", "Camus X.O", "Kavalan Solist Vinho Barrique"]}, {"cat": "Taiwan", "en": "Kavalan Solist Peated", "kr": "카발란 솔리스트 피티드", "price": "₩45,000", "desc": "열대 기후 숙성 특유의 빠른 농축에 스모크가 더해진 강렬하고 개성 있는 피트 몰트.", "tags": ["피트·스모키 애호가", "개성파·실험적 풍미 선호", "카스크스트랭스(고도수) 선호"], "similar": ["Amrut Peated", "Octomore 14.1", "Kilchoman Sanaig"]}, {"cat": "Taiwan", "en": "Kavalan Solist Madeira", "kr": "카발란 솔리스트 마데이라", "price": "₩49,000", "desc": "마데이라 와인 캐스크 싱글캐스크, 견과류와 건과일 단맛이 진하게 농축된 풍미.", "tags": ["셰리캐스크·단맛 선호", "카스크스트랭스(고도수) 선호", "묵직한 디저트 페어링"], "similar": ["Balvenie Madeira Cask 15y", "Kavalan Solist Oloroso Sherry", "Kavalan Solist PX"]}, {"cat": "Taiwan", "en": "Kavalan Solist Oloroso Sherry", "kr": "카발란 솔리스트 올로로소", "price": "₩58,000", "desc": "올로로소 셰리 캐스크 싱글캐스크, 진한 건포도와 다크 초콜릿이 강렬하게 농축되어 있다.", "tags": ["셰리캐스크·단맛 선호", "카스크스트랭스(고도수) 선호", "묵직한 디저트 페어링"], "similar": ["Kavalan Solist Madeira", "Kavalan Solist PX", "Macallan Sherry Cask 18y"]}, {"cat": "Taiwan", "en": "Kavalan Solist PX", "kr": "카발란 솔리스트 PX", "price": "₩60,000", "desc": "페드로 히메네즈 캐스크, 짙은 건포도와 무화과 단맛이 폭발적으로 농축된 카발란 정점.", "tags": ["셰리캐스크·단맛 선호", "카스크스트랭스(고도수) 선호", "묵직한 디저트 페어링"], "similar": ["Kavalan Solist Oloroso Sherry", "Balvenie PX Cask 18y", "Aberlour A'bunadh"]}, {"cat": "Taiwan", "en": "Kavalan Solist Moscatel", "kr": "카발란 솔리스트 모스카텔", "price": "₩65,000", "desc": "모스카텔 와인 캐스크, 화려한 머스캣 포도향과 꿀 같은 단맛이 인상적인 희소 라인.", "tags": ["트로피컬 과일향 선호", "한정판·희소가치 선호", "카스크스트랭스(고도수) 선호"], "similar": ["Kavalan Solist Vinho Barrique", "Glenmorangie Nectar D'Or", "Kavalan Solist Fino"]}, {"cat": "Taiwan", "en": "Kavalan Solist Fino", "kr": "카발란 솔리스트 피노", "price": "₩70,000", "desc": "피노 셰리 캐스크, 가볍고 산뜻한 산미와 견과류 풍미가 농축된 카발란 최상위 희소 라인.", "tags": ["시트러스·산미 선호", "한정판·희소가치 선호", "카스크스트랭스(고도수) 선호"], "similar": ["Kavalan Solist Moscatel", "Kavalan Solist Madeira", "Glenrothes WMC"]}, {"cat": "Brandy", "en": "Camus VSOP", "kr": "까뮤 VSOP", "price": "₩17,000", "desc": "포도 풍미와 부드러운 바닐라, 가벼운 꽃향이 어우러지는 입문용 코냑.", "tags": ["가벼운 입문용", "브랜디 선호", "트로피컬 과일향 선호"], "similar": ["Hennessy VSOP", "Camus X.O", "Remy Martin X.O"]}, {"cat": "Brandy", "en": "Hennessy VSOP", "kr": "헤네시 VSOP", "price": "₩18,000", "desc": "오크와 과일향이 부드럽게 균형 잡힌, 전 세계에서 가장 잘 알려진 스탠다드 코냑.", "tags": ["가벼운 입문용", "브랜디 선호", "가성비 선호"], "similar": ["Camus VSOP", "Hennessy X.O", "Remy Martin X.O"]}, {"cat": "Brandy", "en": "Camus X.O", "kr": "까뮤 XO", "price": "₩25,000", "desc": "오랜 숙성의 깊이, 건과일과 스파이스, 부드러운 오크가 풍성하게 어우러지는 프리미엄 코냑.", "tags": ["브랜디 선호", "묵직한 디저트 페어링", "우디·스파이시 선호"], "similar": ["Camus VSOP", "Remy Martin X.O", "Hennessy X.O"]}, {"cat": "Brandy", "en": "Remy Martin X.O", "kr": "레미마틴 XO", "price": "₩36,000", "desc": "그란데 샹파뉴 원액의 깊은 풍미, 자두와 스파이스, 부드러운 단맛이 조화로운 코냑.", "tags": ["브랜디 선호", "묵직한 디저트 페어링", "한정판·희소가치 선호"], "similar": ["Camus X.O", "Hennessy X.O", "Camus VSOP"]}, {"cat": "Brandy", "en": "Hennessy X.O", "kr": "헤네시 XO", "price": "₩42,000", "desc": "헤네시의 플래그십, 건포도와 다크 초콜릿, 깊은 오크 풍미가 길게 이어지는 정점의 코냑.", "tags": ["브랜디 선호", "묵직한 디저트 페어링", "한정판·희소가치 선호"], "similar": ["Remy Martin X.O", "Camus X.O", "Royal Salute 32y"]}];
+const catsOrder = ["Signature", "Random Whisky", "Highland", "Speyside", "Campbeltown", "Islay", "Island", "Blended", "Bourbon", "Japan", "Australia", "India", "Taiwan", "Brandy"];
+
+let activeCat = '전체';
+let activeTags = new Set();
+let searchText = '';
+let filterBarOpen = false;
+const openDetail = new Set(); // keys "cat||en" currently expanded
+
+const allTags = [...new Set(items.flatMap(i => i.tags))].sort((a,b)=> {
+  const ca = items.filter(i=>i.tags.includes(a)).length;
+  const cb = items.filter(i=>i.tags.includes(b)).length;
+  return cb - ca;
+});
+
+const catBar = document.getElementById('catBar');
+const filterBar = document.getElementById('filterBar');
+const sectionsEl = document.getElementById('sections');
+const emptyState = document.getElementById('emptyState');
+const resultCount = document.getElementById('resultCount');
+const searchBox = document.getElementById('searchBox');
+const filterToggleBtn = document.getElementById('filterToggleBtn');
+
+function key(item){ return item.cat + '||' + item.en; }
+
+function renderCatBar(){
+  catBar.innerHTML = '';
+  const cats = ['전체', ...catsOrder];
+  cats.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip' + (activeCat === c ? ' active' : '');
+    chip.textContent = c === '전체' ? '전체' : c;
+    chip.onclick = () => { activeCat = c; render(); };
+    catBar.appendChild(chip);
+  });
+}
+
+function tagCount(tag){
+  return items.filter(i => i.tags.includes(tag)).length;
+}
+
+function renderFilterBar(){
+  filterBar.className = 'filter-bar' + (filterBarOpen ? ' open' : '');
+  filterBar.innerHTML = '';
+  allTags.forEach(tag => {
+    const chip = document.createElement('div');
+    chip.className = 'filter-chip' + (activeTags.has(tag) ? ' active' : '');
+    chip.innerHTML = tag + '<span class="count">' + tagCount(tag) + '</span>';
+    chip.onclick = () => {
+      if(activeTags.has(tag)) activeTags.delete(tag);
+      else activeTags.add(tag);
+      render();
+    };
+    filterBar.appendChild(chip);
+  });
+  const clear = document.createElement('div');
+  clear.className = 'filter-clear';
+  clear.textContent = '필터 초기화';
+  clear.onclick = () => { activeTags.clear(); render(); };
+  filterBar.appendChild(clear);
+}
+
+function matches(item){
+  if(activeCat !== '전체' && item.cat !== activeCat) return false;
+  if(activeTags.size > 0 && !item.tags.some(t => activeTags.has(t))) return false;
+  if(searchText){
+    const s = searchText.toLowerCase();
+    if(!item.en.toLowerCase().includes(s) && !item.kr.includes(searchText)) return false;
+  }
+  return true;
+}
+
+function renderRow(item){
+  const row = document.createElement('div');
+  row.className = 'row';
+  const isOpen = openDetail.has(key(item));
+
+  const tagsHtml = item.tags.map(t =>
+    '<span class="tag' + (activeTags.has(t) ? ' is-match' : '') + '">' + t + '</span>'
+  ).join('');
+  const similarHtml = item.similar.map(s =>
+    '<span class="similar-pill">' + s + '</span>'
+  ).join('');
+
+  row.innerHTML = `
+    <div class="row-top">
+      <div class="row-names">
+        <p class="name-en">${item.en}</p>
+        <p class="name-kr">${item.kr}</p>
+      </div>
+      <div class="row-right">
+        <div class="price">${item.price}</div>
+        <button class="detail-btn${isOpen ? ' open' : ''}" data-key="${key(item)}">Detail</button>
+      </div>
+    </div>
+    <div class="detail-panel${isOpen ? ' open' : ''}">
+      <div class="desc">${item.desc}</div>
+      <div class="label">이런 손님에게 좋아요</div>
+      <div class="tag-row">${tagsHtml}</div>
+      <div class="label">유사 위스키</div>
+      <div class="similar-row">${similarHtml}</div>
+    </div>
+  `;
+
+  row.querySelector('.detail-btn').onclick = () => {
+    const k = key(item);
+    if(openDetail.has(k)) openDetail.delete(k);
+    else openDetail.add(k);
+    renderSections();
+  };
+
+  return row;
+}
+
+function renderSections(){
+  sectionsEl.innerHTML = '';
+  let shown = 0;
+  const cats = activeCat === '전체' ? catsOrder : [activeCat];
+  cats.forEach(cat => {
+    const catItems = items.filter(i => i.cat === cat && matches(i));
+    if(catItems.length === 0) return;
+    shown += catItems.length;
+    const section = document.createElement('div');
+    section.innerHTML = `<div class="section-title"><h2>${cat}</h2><span>${catItems.length}종</span></div>`;
+    const list = document.createElement('div');
+    catItems.forEach(item => list.appendChild(renderRow(item)));
+    section.appendChild(list);
+    sectionsEl.appendChild(section);
+  });
+  resultCount.textContent = shown + '종 표시 중';
+  emptyState.style.display = shown === 0 ? 'block' : 'none';
+}
+
+function render(){
+  renderCatBar();
+  renderFilterBar();
+  renderSections();
+}
+
+searchBox.addEventListener('input', e => { searchText = e.target.value.trim(); render(); });
+filterToggleBtn.addEventListener('click', () => { filterBarOpen = !filterBarOpen; render(); });
+
+render();
+</script>
+
+</body>
+</html>

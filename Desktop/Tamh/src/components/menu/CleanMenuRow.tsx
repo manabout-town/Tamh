@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Loader2, X, MoreVertical, Trash2, Pencil, Wine } from "lucide-react";
+import { Loader2, X, MoreVertical, Trash2, Pencil, Wine, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn, formatKRW, parseIntegerInput } from "@/lib/utils";
 import type { Menu } from "@/types/database";
+import { WHISKY_DETAILS } from "@/lib/whisky-details";
 
 interface Props {
   menu: Menu;
@@ -27,120 +28,119 @@ interface Props {
  */
 export function CleanMenuRow({ menu, onUpdated, onDeleted, onEdit }: Props) {
   const soldOut = !menu.is_active;
+  const detail = WHISKY_DETAILS[menu.name];
+  const [detailOpen, setDetailOpen] = useState(false);
 
   return (
     <li
       className={cn(
-        "flex items-center gap-2 px-4 py-3.5 transition-colors sm:gap-3 sm:px-5 sm:py-4",
+        "transition-colors",
         soldOut ? "bg-zinc-50/70" : "hover:bg-zinc-50",
       )}
     >
-      {/* 이름 영역 */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p
-            className={cn(
-              "truncate font-display text-base font-semibold sm:text-lg",
-              soldOut ? "text-zinc-400 line-through" : "text-black",
+      <div className="flex items-center gap-2 px-4 py-3.5 sm:gap-3 sm:px-5 sm:py-4">
+        {/* 이름 영역 */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p
+              className={cn(
+                "truncate font-display text-base font-semibold sm:text-lg",
+                soldOut ? "text-zinc-400 line-through" : "text-black",
+              )}
+            >
+              {menu.name}
+            </p>
+            {soldOut && (
+              <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 font-korean text-[10px] font-bold text-red-700">
+                품절
+              </span>
             )}
-          >
-            {menu.name}
-          </p>
-          {soldOut && (
-            <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 font-korean text-[10px] font-bold text-red-700">
-              품절
-            </span>
+          </div>
+          {menu.name_ko && (
+            <p
+              className={cn(
+                "mt-0.5 truncate font-korean text-sm font-medium",
+                soldOut ? "text-zinc-300" : "text-zinc-500",
+              )}
+            >
+              {menu.name_ko}
+            </p>
           )}
         </div>
-        {menu.name_ko && (
-          <p
-            className={cn(
-              "mt-0.5 truncate font-korean text-sm font-medium",
-              soldOut ? "text-zinc-300" : "text-zinc-500",
-            )}
-          >
-            {menu.name_ko}
-          </p>
+
+        {/* 잔 가격 (인라인 편집, 고딕 숫자) */}
+        <PriceCell menu={menu} field="price" onUpdated={onUpdated} disabled={soldOut} />
+
+        {/* 병 가격 — 버튼으로 노출 */}
+        {menu.bottle_price != null && (
+          <BottleButton menu={menu} onUpdated={onUpdated} />
         )}
+
+        {/* Detail — 손님 추천 정보 토글 (보강 콘텐츠가 있는 항목만 노출) */}
+        {detail && (
+          <button
+            onClick={() => setDetailOpen((v) => !v)}
+            className={cn(
+              "shrink-0 rounded-full border px-3 py-1.5 font-korean text-xs font-semibold uppercase tracking-wide transition-all active:scale-95",
+              detailOpen
+                ? "border-amber-600 bg-amber-600 text-white"
+                : "border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-600",
+            )}
+            aria-label="상세 정보 보기"
+          >
+            Detail
+          </button>
+        )}
+
+        {/* 점3개 메뉴 — 수정/삭제 */}
+        <RowMenu menu={menu} onEdit={onEdit} onDeleted={onDeleted} />
       </div>
 
-      {/* 잔 가격 (인라인 편집, 고딕 숫자) */}
-      <PriceCell menu={menu} field="price" onUpdated={onUpdated} disabled={soldOut} />
-
-      {/* 병 가격 — 버튼으로 노출 */}
-      {menu.bottle_price != null && (
-        <BottleButton menu={menu} onUpdated={onUpdated} />
-      )}
-
-      {/* 점3개 메뉴 — 수정/삭제 */}
-      <RowMenu menu={menu} onEdit={onEdit} onDeleted={onDeleted} />
-
-      {/* 우측 끝 — 품절 체크박스 */}
-      <SoldOutCheckbox menu={menu} onUpdated={onUpdated} />
+      {/* Detail 패널 — 한줄설명 / 이런 손님에게 좋아요 / 유사 위스키 */}
+      <AnimatePresence>
+        {detail && detailOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="mx-4 mb-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 sm:mx-5">
+              <p className="font-korean text-sm leading-relaxed text-zinc-700">
+                {detail.desc}
+              </p>
+              <p className="mt-3 font-korean text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                이런 손님에게 좋아요
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {detail.tags.map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full border border-amber-300 bg-white px-2.5 py-1 font-korean text-xs text-amber-700"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-3 font-korean text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                유사 위스키
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {detail.similar.map((s) => (
+                  <span
+                    key={s}
+                    className="rounded-md border border-zinc-200 bg-white px-2 py-0.5 font-korean text-xs text-zinc-500"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </li>
-  );
-}
-
-// =========================================================
-// SoldOutCheckbox — 우측 끝, 1탭 체크박스 (체크 = 품절)
-// =========================================================
-function SoldOutCheckbox({
-  menu,
-  onUpdated,
-}: {
-  menu: Menu;
-  onUpdated: (m: Menu) => void;
-}) {
-  const [saving, setSaving] = useState(false);
-  const soldOut = !menu.is_active;
-
-  const toggle = async () => {
-    setSaving(true);
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("menus")
-        .update({ is_active: !menu.is_active })
-        .eq("id", menu.id)
-        .select()
-        .single();
-      if (data) onUpdated(data as Menu);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <button
-      onClick={toggle}
-      disabled={saving}
-      className="ml-1 flex shrink-0 items-center gap-2 active:scale-95"
-      aria-label={soldOut ? "판매 재개" : "품절 처리"}
-      title={soldOut ? "탭하여 판매 재개" : "탭하여 품절 처리"}
-    >
-      <span
-        className={cn(
-          "inline-flex h-8 w-8 items-center justify-center rounded-md border-2 transition-colors",
-          soldOut
-            ? "border-red-500 bg-red-500 text-white"
-            : "border-zinc-300 bg-white text-transparent",
-        )}
-      >
-        {saving ? (
-          <Loader2 className="h-4 w-4 animate-spin text-zinc-500" strokeWidth={2} />
-        ) : (
-          <Check className="h-5 w-5" strokeWidth={3} />
-        )}
-      </span>
-      <span
-        className={cn(
-          "hidden font-korean text-xs font-semibold sm:inline",
-          soldOut ? "text-red-700" : "text-zinc-400",
-        )}
-      >
-        품절
-      </span>
-    </button>
   );
 }
 
@@ -332,6 +332,7 @@ function PriceCell({
   };
 
   if (!editing) {
+    const hasEvent = menu.event_price != null;
     return (
       <button
         onClick={() => {
@@ -339,15 +340,26 @@ function PriceCell({
           setEditing(true);
         }}
         className={cn(
-          "shrink-0 rounded-md px-2 py-1 font-korean text-lg font-bold tabular-nums transition-all active:scale-95 sm:text-xl",
-          flash
-            ? "bg-emerald-100 text-emerald-700"
-            : "text-black hover:bg-zinc-100",
+          "shrink-0 rounded-md px-2 py-1 text-right transition-all active:scale-95",
+          flash ? "bg-emerald-100" : "hover:bg-zinc-100",
           disabled && "opacity-50",
         )}
         aria-label="잔 가격 수정"
       >
-        ₩{formatKRW(value)}
+        {hasEvent ? (
+          <>
+            <p className="font-korean text-xs tabular-nums text-zinc-400 line-through">
+              ₩{formatKRW(value)}
+            </p>
+            <p className={cn("font-korean text-lg font-bold tabular-nums sm:text-xl", flash ? "text-emerald-700" : "text-amber-600")}>
+              ₩{formatKRW(menu.event_price!)}
+            </p>
+          </>
+        ) : (
+          <p className={cn("font-korean text-lg font-bold tabular-nums sm:text-xl", flash ? "text-emerald-700" : "text-black")}>
+            ₩{formatKRW(value)}
+          </p>
+        )}
       </button>
     );
   }
