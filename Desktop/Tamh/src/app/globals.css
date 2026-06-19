@@ -167,7 +167,7 @@ html {
     background: transparent;
   }
   .luxe-scroll::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #6e5618, #d4af37);
+    background: #888;
     border-radius: 999px;
   }
 }
@@ -204,4 +204,23 @@ html {
 ::selection {
   background: rgba(212, 175, 55, 0.35);
   color: #fff;
+}
+
+/* ============================================================
+   LIGHT / VIEW MODE  (메뉴판 손님용 깔끔한 흰 배경)
+   body에 view-mode-light 클래스가 붙으면 활성화됩니다.
+   ============================================================ */
+body.view-mode-light {
+  background: #ffffff !important;
+  color: #000000;
+}
+body.view-mode-light::after {
+  display: none !important;
+}
+body.view-mode-light .ambient-bg {
+  display: none !important;
+}
+body.view-mode-light ::selection {
+  background: rgba(0, 0, 0, 0.08);
+  color: #000000;
 }

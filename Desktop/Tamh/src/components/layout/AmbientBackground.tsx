@@ -7,7 +7,10 @@
  */
 export function AmbientBackground() {
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    <div
+      aria-hidden
+      className="ambient-bg pointer-events-none fixed inset-0 z-0 overflow-hidden"
+    >
       {/* 골드 글로우 (좌상) */}
       <div
         className="absolute -left-32 -top-32 h-[40rem] w-[40rem] rounded-full opacity-[0.18] blur-[120px]"

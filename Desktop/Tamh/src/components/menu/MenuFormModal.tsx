@@ -2,26 +2,33 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Loader2, Save, Sparkles } from "lucide-react";
+import { X, Loader2, Save, Sparkles, Plus } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn, parseIntegerInput } from "@/lib/utils";
 import type { Category, Menu } from "@/types/database";
 
 interface Props {
   categories: Category[];
+  /** 있으면 수정 모드, 없으면 생성 모드 */
+  menu?: Menu;
   onClose: () => void;
-  onCreated: (m: Menu) => void;
+  onSaved: (m: Menu) => void;
 }
 
-export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
+/**
+ * MenuFormModal — 메뉴 생성 / 수정 통합 모달.
+ * iPad 라이트 테마, 큰 터치 타깃.
+ */
+export function MenuFormModal({ categories, menu, onClose, onSaved }: Props) {
+  const isEdit = !!menu;
   const [form, setForm] = useState({
-    category_id: categories[0]?.id ?? "",
-    name: "",
-    name_ko: "",
-    price: "",
-    bottle_price: "",
-    description: "",
-    is_recommended: false,
+    category_id: menu?.category_id ?? categories[0]?.id ?? "",
+    name: menu?.name ?? "",
+    name_ko: menu?.name_ko ?? "",
+    price: menu ? String(menu.price) : "",
+    bottle_price: menu?.bottle_price != null ? String(menu.bottle_price) : "",
+    description: menu?.description ?? "",
+    is_recommended: menu?.is_recommended ?? false,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,18 +39,12 @@ export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!form.category_id) {
-      setError("카테고리를 선택해주세요.");
-      return;
-    }
-    if (!form.name.trim()) {
-      setError("영문 이름을 입력해주세요.");
-      return;
-    }
+    if (!form.category_id) return setError("카테고리를 선택해주세요.");
+    if (!form.name.trim()) return setError("영문 이름을 입력해주세요.");
+
     const priceNum = parseIntegerInput(form.price);
     if (priceNum == null || priceNum < 0) {
-      setError("가격(잔)을 올바르게 입력해주세요.");
-      return;
+      return setError("잔 가격을 올바르게 입력해주세요.");
     }
     const bottleNum = form.bottle_price.trim()
       ? parseIntegerInput(form.bottle_price)
@@ -52,26 +53,27 @@ export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
     setSaving(true);
     try {
       const supabase = getSupabaseBrowserClient();
-      const { data, error: dbErr } = await supabase
-        .from("menus")
-        .insert({
-          category_id: form.category_id,
-          name: form.name.trim(),
-          name_ko: form.name_ko.trim() || null,
-          price: priceNum,
-          bottle_price: bottleNum,
-          description: form.description.trim() || null,
-          is_active: true,
-          is_recommended: form.is_recommended,
-        })
-        .select()
-        .single();
-      if (dbErr || !data) throw dbErr ?? new Error("insert failed");
-      onCreated(data as Menu);
+      const payload = {
+        category_id: form.category_id,
+        name: form.name.trim(),
+        name_ko: form.name_ko.trim() || null,
+        price: priceNum,
+        bottle_price: bottleNum,
+        description: form.description.trim() || null,
+        is_recommended: form.is_recommended,
+      };
+
+      const query = isEdit
+        ? supabase.from("menus").update(payload).eq("id", menu!.id)
+        : supabase.from("menus").insert({ ...payload, is_active: true });
+
+      const { data, error: dbErr } = await query.select().single();
+      if (dbErr || !data) throw dbErr ?? new Error("save failed");
+      onSaved(data as Menu);
       onClose();
     } catch (e: any) {
       console.error(e);
-      setError(e?.message ?? "메뉴 추가에 실패했습니다.");
+      setError(e?.message ?? "저장에 실패했습니다.");
     } finally {
       setSaving(false);
     }
@@ -83,7 +85,7 @@ export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
       <motion.div
@@ -91,20 +93,20 @@ export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 20, opacity: 0, scale: 0.96 }}
         transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        className="fixed inset-x-4 top-12 z-50 mx-auto max-h-[88vh] max-w-xl overflow-y-auto rounded-2xl border border-gold/25 bg-charcoal-200/95 p-7 backdrop-blur-luxe luxe-scroll"
+        className="fixed inset-x-4 top-8 z-50 mx-auto max-h-[88vh] max-w-xl overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-7 shadow-2xl luxe-scroll"
       >
         <div className="mb-5 flex items-center justify-between">
           <div>
-            <p className="font-display text-xs uppercase tracking-widest2 text-gold">
-              New Menu
+            <p className="font-display text-xs uppercase tracking-[0.3em] text-zinc-400">
+              {isEdit ? "Edit Menu" : "New Menu"}
             </p>
-            <h3 className="font-korean mt-1 text-2xl font-bold text-ivory">
-              메뉴 추가
+            <h3 className="mt-1 font-korean text-2xl font-bold text-black">
+              {isEdit ? "메뉴 수정" : "메뉴 추가"}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-ivory/60 hover:bg-charcoal-100 hover:text-gold"
+            className="rounded-full p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
             aria-label="닫기"
           >
             <X className="h-5 w-5" />
@@ -133,15 +135,15 @@ export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
                 required
                 value={form.name}
                 onChange={(e) => update("name", e.target.value)}
-                placeholder="예: Macallan 25y"
-                className={cn(INPUT, "font-display text-lg")}
+                placeholder="Macallan 25y"
+                className={cn(INPUT, "font-display text-lg font-semibold")}
               />
             </Field>
             <Field label="한글 이름">
               <input
                 value={form.name_ko}
                 onChange={(e) => update("name_ko", e.target.value)}
-                placeholder="예: 맥켈란 25년"
+                placeholder="맥켈란 25년"
                 className={cn(INPUT, "font-korean")}
               />
             </Field>
@@ -158,7 +160,7 @@ export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
                   update("price", e.target.value.replace(/[^0-9]/g, ""))
                 }
                 placeholder="18000"
-                className={cn(INPUT, "tabular-nums")}
+                className={cn(INPUT, "font-korean tabular-nums")}
               />
             </Field>
             <Field label="병 가격 (원, 선택)">
@@ -170,7 +172,7 @@ export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
                   update("bottle_price", e.target.value.replace(/[^0-9]/g, ""))
                 }
                 placeholder="(공란 가능)"
-                className={cn(INPUT, "tabular-nums")}
+                className={cn(INPUT, "font-korean tabular-nums")}
               />
             </Field>
           </div>
@@ -180,49 +182,51 @@ export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
               rows={3}
               value={form.description}
               onChange={(e) => update("description", e.target.value)}
-              placeholder="짧은 설명이나 노트…"
+              placeholder="짧은 설명…"
               className={cn(INPUT, "resize-y font-korean leading-relaxed")}
             />
           </Field>
 
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gold/15 bg-charcoal-100/40 px-3 py-2">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
             <input
               type="checkbox"
               checked={form.is_recommended}
               onChange={(e) => update("is_recommended", e.target.checked)}
-              className="h-4 w-4 accent-gold"
+              className="h-5 w-5 accent-black"
             />
-            <Sparkles className="h-3.5 w-3.5 text-gold" strokeWidth={1.6} />
-            <span className="font-korean text-sm text-ivory/85">
-              시그니처 / 추천 메뉴로 표시
+            <Sparkles className="h-4 w-4 text-zinc-500" strokeWidth={1.6} />
+            <span className="font-korean text-sm font-medium text-zinc-700">
+              시그니처(추천 메뉴)
             </span>
           </label>
 
           {error && (
-            <p className="rounded-lg border border-burgundy/40 bg-burgundy/10 p-3 font-korean text-sm text-ivory/85">
+            <p className="rounded-xl border border-red-200 bg-red-50 p-3 font-korean text-sm text-red-800">
               {error}
             </p>
           )}
 
-          <div className="flex justify-end gap-3 border-t border-gold/15 pt-4">
+          <div className="flex justify-end gap-2 border-t border-zinc-200 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-gold/25 px-5 py-2.5 font-korean text-sm font-medium text-ivory/80 hover:border-gold/60 hover:text-gold"
+              className="rounded-full border border-zinc-300 px-5 py-3 font-korean text-sm font-medium text-zinc-700 hover:bg-zinc-50"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-full bg-gold px-6 py-2.5 font-korean text-sm font-semibold text-charcoal-900 shadow-gold-glow disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-black px-6 py-3 font-korean text-sm font-semibold text-white shadow-md transition-all hover:bg-zinc-800 disabled:opacity-60"
             >
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+              ) : isEdit ? (
                 <Save className="h-4 w-4" strokeWidth={2} />
+              ) : (
+                <Plus className="h-4 w-4" strokeWidth={2.4} />
               )}
-              추가하기
+              {isEdit ? "저장" : "추가"}
             </button>
           </div>
         </form>
@@ -232,7 +236,7 @@ export function MenuCreateModal({ categories, onClose, onCreated }: Props) {
 }
 
 const INPUT =
-  "w-full rounded-lg border border-gold/20 bg-charcoal-100/60 px-4 py-2.5 text-base text-ivory placeholder:text-ivory/30 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold/40";
+  "w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-base text-black placeholder:text-zinc-400 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10";
 
 function Field({
   label,
@@ -243,7 +247,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block font-korean text-xs font-medium uppercase tracking-widest2 text-gold/80">
+      <span className="mb-1.5 block font-korean text-xs font-medium uppercase tracking-widest text-zinc-500">
         {label}
       </span>
       {children}
