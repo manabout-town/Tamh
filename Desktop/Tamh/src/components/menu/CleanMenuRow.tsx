@@ -10,6 +10,7 @@ import { WHISKY_DETAILS } from "@/lib/whisky-details";
 
 interface Props {
   menu: Menu;
+  adminMode?: boolean;
   onUpdated: (m: Menu) => void;
   onDeleted: (id: string) => void;
   onEdit: (menu: Menu) => void;
@@ -26,7 +27,7 @@ interface Props {
  * • ⋮: 수정 / 삭제 메뉴
  * • 우측 끝 체크박스: 품절 토글 (체크 = 품절)
  */
-export function CleanMenuRow({ menu, onUpdated, onDeleted, onEdit }: Props) {
+export function CleanMenuRow({ menu, adminMode = false, onUpdated, onDeleted, onEdit }: Props) {
   const soldOut = !menu.is_active;
   const detail = WHISKY_DETAILS[menu.name];
   const [detailOpen, setDetailOpen] = useState(false);
@@ -68,12 +69,17 @@ export function CleanMenuRow({ menu, onUpdated, onDeleted, onEdit }: Props) {
           )}
         </div>
 
-        {/* 잔 가격 (인라인 편집, 고딕 숫자) */}
-        <PriceCell menu={menu} field="price" onUpdated={onUpdated} disabled={soldOut} />
+        {/* 잔 가격 (관리자만 인라인 편집) */}
+        <PriceCell menu={menu} field="price" onUpdated={onUpdated} disabled={soldOut} adminMode={adminMode} />
 
-        {/* 병 가격 — 버튼으로 노출 */}
-        {menu.bottle_price != null && (
+        {/* 병 가격 — 관리자만 편집 버튼 노출 */}
+        {menu.bottle_price != null && adminMode && (
           <BottleButton menu={menu} onUpdated={onUpdated} />
+        )}
+        {menu.bottle_price != null && !adminMode && (
+          <span className="shrink-0 font-korean text-xs tabular-nums text-zinc-400">
+            병 ₩{menu.bottle_price.toLocaleString("ko-KR")}
+          </span>
         )}
 
         {/* Detail — 손님 추천 정보 토글 (보강 콘텐츠가 있는 항목만 노출) */}
@@ -92,8 +98,8 @@ export function CleanMenuRow({ menu, onUpdated, onDeleted, onEdit }: Props) {
           </button>
         )}
 
-        {/* 점3개 메뉴 — 수정/삭제 */}
-        <RowMenu menu={menu} onEdit={onEdit} onDeleted={onDeleted} />
+        {/* 점3개 메뉴 — 관리자만 */}
+        {adminMode && <RowMenu menu={menu} onEdit={onEdit} onDeleted={onDeleted} />}
       </div>
 
       {/* Detail 패널 — 한줄설명 / 이런 손님에게 좋아요 / 유사 위스키 */}
@@ -285,11 +291,13 @@ function PriceCell({
   field,
   onUpdated,
   disabled,
+  adminMode,
 }: {
   menu: Menu;
   field: "price";
   onUpdated: (m: Menu) => void;
   disabled?: boolean;
+  adminMode?: boolean;
 }) {
   const value = menu[field];
   const [editing, setEditing] = useState(false);
@@ -333,6 +341,26 @@ function PriceCell({
 
   if (!editing) {
     const hasEvent = menu.event_price != null;
+    if (!adminMode) {
+      return (
+        <div className={cn("shrink-0 rounded-md px-2 py-1 text-right", disabled && "opacity-50")}>
+          {hasEvent ? (
+            <>
+              <p className="font-korean text-xs tabular-nums text-zinc-400 line-through">
+                ₩{formatKRW(value)}
+              </p>
+              <p className="font-korean text-lg font-bold tabular-nums text-amber-600 sm:text-xl">
+                ₩{formatKRW(menu.event_price!)}
+              </p>
+            </>
+          ) : (
+            <p className="font-korean text-lg font-bold tabular-nums text-black sm:text-xl">
+              ₩{formatKRW(value)}
+            </p>
+          )}
+        </div>
+      );
+    }
     return (
       <button
         onClick={() => {

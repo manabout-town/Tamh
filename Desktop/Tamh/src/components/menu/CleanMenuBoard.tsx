@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, X, Star, Settings2, XCircle } from "lucide-react";
+import { Plus, Search, X, Star, Settings2, XCircle, Lock, LockOpen } from "lucide-react";
 import Link from "next/link";
 import type { Category, Menu } from "@/types/database";
 import { PRIMARY_GROUPS, groupOf, CATEGORY_DISPLAY_NAMES, type GroupKey } from "@/lib/category-groups";
@@ -10,6 +10,8 @@ import { CleanMenuRow } from "./CleanMenuRow";
 import { MenuCardGrid } from "./MenuCardGrid";
 import { MenuFormModal } from "./MenuFormModal";
 import { WeeklyEventModal } from "./WeeklyEventModal";
+import { PinModal } from "./PinModal";
+import { useAdminMode } from "@/lib/use-admin-mode";
 import { cn, formatKRW } from "@/lib/utils";
 
 interface Props {
@@ -29,6 +31,8 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
   const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
   const [weeklyOpen, setWeeklyOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
+  const { isAdmin, unlock, lock } = useAdminMode();
 
   useEffect(() => {
     const savedTab = localStorage.getItem(TAB_KEY) as GroupKey | null;
@@ -128,20 +132,39 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
 
         {/* 관리 툴바 */}
         <div className="mb-5 flex items-center justify-end gap-2">
-          <Link
-            href="/soldout"
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-zinc-200 px-4 font-korean text-xs font-semibold text-zinc-600 transition-all hover:border-zinc-900 hover:text-black active:scale-95"
+          {isAdmin && (
+            <>
+              <Link
+                href="/soldout"
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-zinc-200 px-4 font-korean text-xs font-semibold text-zinc-600 transition-all hover:border-zinc-900 hover:text-black active:scale-95"
+              >
+                <XCircle className="h-3.5 w-3.5" strokeWidth={2} />
+                품절 관리
+              </Link>
+              <Link
+                href="/detail"
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-zinc-200 px-4 font-korean text-xs font-semibold text-zinc-600 transition-all hover:border-zinc-900 hover:text-black active:scale-95"
+              >
+                <Star className="h-3.5 w-3.5" strokeWidth={2} />
+                디테일 보기
+              </Link>
+            </>
+          )}
+          <button
+            onClick={() => isAdmin ? lock() : setPinOpen(true)}
+            className={cn(
+              "inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all active:scale-95",
+              isAdmin
+                ? "border-black bg-black text-white hover:bg-zinc-800"
+                : "border-zinc-200 bg-white text-zinc-400 hover:border-zinc-900 hover:text-black",
+            )}
+            aria-label={isAdmin ? "관리자 잠금" : "관리자 잠금 해제"}
           >
-            <XCircle className="h-3.5 w-3.5" strokeWidth={2} />
-            품절 관리
-          </Link>
-          <Link
-            href="/detail"
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-zinc-200 px-4 font-korean text-xs font-semibold text-zinc-600 transition-all hover:border-zinc-900 hover:text-black active:scale-95"
-          >
-            <Star className="h-3.5 w-3.5" strokeWidth={2} />
-            디테일 보기
-          </Link>
+            {isAdmin
+              ? <LockOpen className="h-4 w-4" strokeWidth={2} />
+              : <Lock className="h-4 w-4" strokeWidth={2} />
+            }
+          </button>
         </div>
 
         {/* 로고 */}
@@ -245,7 +268,7 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
                           {displayName}
                         </SubChip>
                         {/* 위클리 이벤트 서브탭에 관리 버튼 */}
-                        {isWeeklyChip && isActive && (
+                        {isWeeklyChip && isActive && isAdmin && (
                           <button
                             onClick={() => setWeeklyOpen(true)}
                             className="inline-flex h-9 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-3 font-korean text-xs font-semibold text-amber-700 transition-all hover:border-amber-500 hover:bg-amber-100 active:scale-95"
@@ -310,6 +333,7 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
                         <CleanMenuRow
                           key={m.id}
                           menu={m}
+                          adminMode={isAdmin}
                           onUpdated={handleUpdated}
                           onDeleted={handleDeleted}
                           onEdit={(menu) => setEditingMenu(menu)}
@@ -329,13 +353,15 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
                     <p className="font-korean text-sm text-zinc-400">
                       위클리 이벤트 항목이 없습니다
                     </p>
-                    <button
-                      onClick={() => setWeeklyOpen(true)}
-                      className="mt-4 inline-flex h-10 items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-5 font-korean text-sm font-semibold text-amber-700 transition-all hover:bg-amber-100 active:scale-95"
-                    >
-                      <Settings2 className="h-4 w-4" strokeWidth={2} />
-                      관리에서 추가하기
-                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => setWeeklyOpen(true)}
+                        className="mt-4 inline-flex h-10 items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-5 font-korean text-sm font-semibold text-amber-700 transition-all hover:bg-amber-100 active:scale-95"
+                      >
+                        <Settings2 className="h-4 w-4" strokeWidth={2} />
+                        관리에서 추가하기
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <p className="font-korean italic text-zinc-400">
@@ -354,16 +380,28 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
         </footer>
       </div>
 
-      {/* 플로팅 + 추가 */}
-      <button
-        onClick={() => setCreating(true)}
-        className="fixed bottom-6 right-6 z-30 inline-flex h-16 w-16 items-center justify-center rounded-full bg-black text-white shadow-xl transition-all hover:bg-zinc-800 active:scale-95"
-        aria-label="메뉴 추가"
-      >
-        <Plus className="h-7 w-7" strokeWidth={2.2} />
-      </button>
+      {/* 플로팅 + 추가 (관리자 전용) */}
+      {isAdmin && (
+        <button
+          onClick={() => setCreating(true)}
+          className="fixed bottom-6 right-6 z-30 inline-flex h-16 w-16 items-center justify-center rounded-full bg-black text-white shadow-xl transition-all hover:bg-zinc-800 active:scale-95"
+          aria-label="메뉴 추가"
+        >
+          <Plus className="h-7 w-7" strokeWidth={2.2} />
+        </button>
+      )}
 
       <AnimatePresence>
+        {pinOpen && (
+          <PinModal
+            onUnlock={(pin) => {
+              const ok = unlock(pin);
+              if (ok) setPinOpen(false);
+              return ok;
+            }}
+            onClose={() => setPinOpen(false)}
+          />
+        )}
         {creating && (
           <MenuFormModal
             categories={categories}
