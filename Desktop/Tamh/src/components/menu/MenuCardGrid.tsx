@@ -48,7 +48,7 @@ interface CardProps {
 }
 
 function MenuCard({ menu, dataMap, soldOut }: CardProps) {
-  const staticInfo = dataMap[menu.name];
+  const staticInfo = dataMap[menu.name_ko ?? menu.name] ?? dataMap[menu.name];
   const imageUrl = menu.image_url || staticInfo?.image || null;
   const desc = staticInfo?.desc;
   const alc = "alc" in (staticInfo ?? {}) ? (staticInfo as { alc?: string }).alc : undefined;

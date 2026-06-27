@@ -6,7 +6,7 @@ import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  onUnlock: (pin: string) => boolean;
+  onUnlock: (pin: string) => Promise<boolean>;
   onClose: () => void;
 }
 
@@ -20,7 +20,7 @@ export function PinModal({ onUnlock, onClose }: Props) {
     inputRefs.current[0]?.focus();
   }, []);
 
-  const handleChange = (i: number, val: string) => {
+  const handleChange = async (i: number, val: string) => {
     const digit = val.replace(/[^0-9]/g, "").slice(-1);
     const next = [...digits];
     next[i] = digit;
@@ -33,7 +33,7 @@ export function PinModal({ onUnlock, onClose }: Props) {
 
     if (digit && i === 3) {
       const pin = next.join("");
-      const ok = onUnlock(pin);
+      const ok = await onUnlock(pin);
       if (!ok) {
         setShake(true);
         setError(true);

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { X, Loader2, Star, Search, Tag } from "lucide-react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { adminUpdateMenu } from "@/lib/admin-api";
 import { cn, formatKRW, parseIntegerInput } from "@/lib/utils";
 import type { Category, Menu } from "@/types/database";
 import { groupOf } from "@/lib/category-groups";
@@ -44,14 +44,8 @@ export function WeeklyEventModal({ categories, menus, onClose, onUpdated }: Prop
   const toggleWeekly = async (menu: Menu) => {
     setSaving((s) => new Set(s).add(menu.id));
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("menus")
-        .update({ is_recommended: !menu.is_recommended })
-        .eq("id", menu.id)
-        .select()
-        .single();
-      if (data) onUpdated(data as Menu);
+      const updated = await adminUpdateMenu(menu.id, { is_recommended: !menu.is_recommended });
+      onUpdated(updated);
     } finally {
       setSaving((s) => {
         const next = new Set(s);
@@ -232,14 +226,8 @@ function EventPriceEditor({
     if (parsed === menu.event_price) return setEditing(false);
     setSaving(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("menus")
-        .update({ event_price: parsed })
-        .eq("id", menu.id)
-        .select()
-        .single();
-      if (data) onUpdated(data as Menu);
+      const updated = await adminUpdateMenu(menu.id, { event_price: parsed });
+      onUpdated(updated);
       setEditing(false);
     } finally {
       setSaving(false);

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, X, MoreVertical, Trash2, Pencil, Wine, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { adminUpdateMenu, adminDeleteMenu } from "@/lib/admin-api";
 import { cn, formatKRW, parseIntegerInput } from "@/lib/utils";
 import type { Menu } from "@/types/database";
 import { WHISKY_DETAILS } from "@/lib/whisky-details";
@@ -234,14 +234,8 @@ function BottlePriceInline({
     if (parsed === value) return setEditing(false);
     setSaving(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("menus")
-        .update({ bottle_price: parsed })
-        .eq("id", menu.id)
-        .select()
-        .single();
-      if (data) onUpdated(data as Menu);
+      const updated = await adminUpdateMenu(menu.id, { bottle_price: parsed });
+      onUpdated(updated);
       setEditing(false);
     } finally {
       setSaving(false);
@@ -321,19 +315,11 @@ function PriceCell({
     if (parsed == null || parsed < 0) return;
     setSaving(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("menus")
-        .update({ price: parsed })
-        .eq("id", menu.id)
-        .select()
-        .single();
-      if (data) {
-        onUpdated(data as Menu);
-        setEditing(false);
-        setFlash(true);
-        setTimeout(() => setFlash(false), 900);
-      }
+      const updated = await adminUpdateMenu(menu.id, { price: parsed });
+      onUpdated(updated);
+      setEditing(false);
+      setFlash(true);
+      setTimeout(() => setFlash(false), 900);
     } finally {
       setSaving(false);
     }
@@ -435,9 +421,8 @@ function RowMenu({
   const doDelete = async () => {
     setSaving(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase.from("menus").delete().eq("id", menu.id);
-      if (!error) onDeleted(menu.id);
+      await adminDeleteMenu(menu.id);
+      onDeleted(menu.id);
     } finally {
       setSaving(false);
       setConfirming(false);

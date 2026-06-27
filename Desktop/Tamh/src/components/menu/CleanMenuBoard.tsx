@@ -394,8 +394,8 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
       <AnimatePresence>
         {pinOpen && (
           <PinModal
-            onUnlock={(pin) => {
-              const ok = unlock(pin);
+            onUnlock={async (pin) => {
+              const ok = await unlock(pin);
               if (ok) setPinOpen(false);
               return ok;
             }}

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { verifyPin, setAdminPin, clearAdminPin } from "./admin-api";
 
 const ADMIN_KEY = "tamh-admin";
-const ADMIN_PIN = "0013";
 
 export function useAdminMode() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -12,16 +12,18 @@ export function useAdminMode() {
     setIsAdmin(sessionStorage.getItem(ADMIN_KEY) === "true");
   }, []);
 
-  const unlock = (pin: string): boolean => {
-    if (pin === ADMIN_PIN) {
+  const unlock = async (pin: string): Promise<boolean> => {
+    const ok = await verifyPin(pin);
+    if (ok) {
+      setAdminPin(pin);
       sessionStorage.setItem(ADMIN_KEY, "true");
       setIsAdmin(true);
-      return true;
     }
-    return false;
+    return ok;
   };
 
   const lock = () => {
+    clearAdminPin();
     sessionStorage.removeItem(ADMIN_KEY);
     setIsAdmin(false);
   };

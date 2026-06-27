@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { X, Loader2, Save, Sparkles, Plus } from "lucide-react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { adminCreateMenu, adminUpdateMenu } from "@/lib/admin-api";
 import { cn, parseIntegerInput } from "@/lib/utils";
 import type { Category, Menu } from "@/types/database";
 
@@ -52,7 +52,6 @@ export function MenuFormModal({ categories, menu, onClose, onSaved }: Props) {
 
     setSaving(true);
     try {
-      const supabase = getSupabaseBrowserClient();
       const payload = {
         category_id: form.category_id,
         name: form.name.trim(),
@@ -63,16 +62,13 @@ export function MenuFormModal({ categories, menu, onClose, onSaved }: Props) {
         is_recommended: form.is_recommended,
       };
 
-      const query = isEdit
-        ? supabase.from("menus").update(payload).eq("id", menu!.id)
-        : supabase.from("menus").insert({ ...payload, is_active: true });
+      const saved = isEdit
+        ? await adminUpdateMenu(menu!.id, payload)
+        : await adminCreateMenu({ ...payload, is_active: true } as any);
 
-      const { data, error: dbErr } = await query.select().single();
-      if (dbErr || !data) throw dbErr ?? new Error("save failed");
-      onSaved(data as Menu);
+      onSaved(saved);
       onClose();
     } catch (e: any) {
-      console.error(e);
       setError(e?.message ?? "저장에 실패했습니다.");
     } finally {
       setSaving(false);

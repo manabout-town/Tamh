@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Loader2, XCircle, ArrowLeft, LayoutGrid, Search } from "lucide-react";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { adminUpdateMenu } from "@/lib/admin-api";
 import { cn, formatKRW } from "@/lib/utils";
 import type { Category, Menu } from "@/types/database";
 
@@ -27,16 +27,8 @@ export function SoldoutBoard({ categories, menus: initialMenus }: Props) {
   const toggle = async (menu: Menu) => {
     setSaving((s) => new Set(s).add(menu.id));
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("menus")
-        .update({ is_active: !menu.is_active })
-        .eq("id", menu.id)
-        .select()
-        .single();
-      if (data) {
-        setMenus((prev) => prev.map((m) => (m.id === menu.id ? (data as Menu) : m)));
-      }
+      const updated = await adminUpdateMenu(menu.id, { is_active: !menu.is_active });
+      setMenus((prev) => prev.map((m) => (m.id === menu.id ? updated : m)));
     } finally {
       setSaving((s) => {
         const next = new Set(s);
@@ -47,11 +39,9 @@ export function SoldoutBoard({ categories, menus: initialMenus }: Props) {
   };
 
   const bulkSoldout = async (ids: string[]) => {
-    const allSaving = new Set([...saving, ...ids]);
-    setSaving(allSaving);
+    setSaving(new Set([...saving, ...ids]));
     try {
-      const supabase = getSupabaseBrowserClient();
-      await supabase.from("menus").update({ is_active: false }).in("id", ids);
+      await Promise.all(ids.map((id) => adminUpdateMenu(id, { is_active: false })));
       setMenus((prev) =>
         prev.map((m) => (ids.includes(m.id) ? { ...m, is_active: false } : m))
       );
