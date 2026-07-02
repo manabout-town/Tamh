@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { WHISKY_DETAILS } from "@/lib/whisky-details";
 import { cn } from "@/lib/utils";
 import type { Menu } from "@/types/database";
@@ -21,13 +20,10 @@ export default function DetailPage() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
-    supabase
-      .from("menus")
-      .select("*")
-      .order("name", { ascending: true })
-      .then(({ data }) => {
-        setMenus((data as Menu[]) ?? []);
+    fetch("/api/menus")
+      .then((r) => r.json())
+      .then((data: Menu[]) => {
+        setMenus(data ?? []);
         setLoading(false);
       });
   }, []);
