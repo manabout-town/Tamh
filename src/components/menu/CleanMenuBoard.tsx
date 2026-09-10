@@ -114,6 +114,12 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
       .filter((g) => g.menus.length > 0);
   }, [menus, categories, tab, sub, query, isSearching, categoriesInTab, signatureCatId, isWeeklySub]);
 
+  // 메뉴 추가 시 지금 보고 있는 카테고리를 미리 골라둡니다.
+  const defaultCategoryId = useMemo(
+    () => (sub !== "all" ? sub : categoriesInTab[0]?.id),
+    [sub, categoriesInTab],
+  );
+
   const handleUpdated = (m: Menu) =>
     setMenus((prev) => prev.map((p) => (p.id === m.id ? m : p)));
   const handleDeleted = (id: string) =>
@@ -318,7 +324,13 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
 
                 {/* 칵테일 / 푸드 : 카드 그리드 */}
                 {(tab === "cocktail" || tab === "food") ? (
-                  <MenuCardGrid menus={items} type={tab} />
+                  <MenuCardGrid
+                    menus={items}
+                    type={tab}
+                    adminMode={isAdmin}
+                    onEdit={(menu) => setEditingMenu(menu)}
+                    onUpdated={handleUpdated}
+                  />
                 ) : (
                   /* 위스키 / 위클리이벤트 : 리스트 */
                   isWeekly ? (
@@ -405,6 +417,7 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
         {creating && (
           <MenuFormModal
             categories={categories}
+            defaultCategoryId={defaultCategoryId}
             onClose={() => setCreating(false)}
             onSaved={handleSaved}
           />
@@ -415,6 +428,7 @@ export function CleanMenuBoard({ categories, menus: initialMenus }: Props) {
             menu={editingMenu}
             onClose={() => setEditingMenu(null)}
             onSaved={handleSaved}
+            onDeleted={handleDeleted}
           />
         )}
         {weeklyOpen && (

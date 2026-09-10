@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/static-db";
+import { createMenu } from "@/lib/menu-store";
+import { isAdminRequest } from "@/lib/admin-auth";
 
-function checkPin(req: NextRequest) {
-  return req.headers.get("x-admin-pin") === process.env.ADMIN_PIN;
-}
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  if (!checkPin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const payload = await req.json();
-  const menu = db.insertMenu(payload);
-  return NextResponse.json(menu, { status: 201 });
+  if (!isAdminRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  try {
+    const menu = await createMenu(await req.json());
+    return NextResponse.json(menu, { status: 201 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message ?? "메뉴 추가 실패" }, { status: 500 });
+  }
 }

@@ -51,6 +51,32 @@ export async function adminUpdateMenu(
   return res.json();
 }
 
+/** 메뉴 사진 업로드 — 성공하면 공개 이미지 URL을 돌려줍니다. */
+export async function adminUploadImage(file: File): Promise<string> {
+  const body = new FormData();
+  body.append("file", file);
+
+  const res = await fetch("/api/admin/upload", {
+    method: "POST",
+    headers: { "x-admin-pin": getAdminPin() },
+    body,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let message = text || "업로드에 실패했습니다.";
+    try {
+      message = JSON.parse(text).error ?? message;
+    } catch {
+      // 본문이 JSON이 아니면 원문 그대로 사용
+    }
+    throw new Error(message);
+  }
+
+  const { url } = await res.json();
+  return url as string;
+}
+
 export async function adminDeleteMenu(id: string): Promise<void> {
   const res = await fetch(`/api/admin/menus/${id}`, {
     method: "DELETE",
