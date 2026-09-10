@@ -25,7 +25,7 @@ export const COCKTAIL_DATA: Record<string, CocktailInfo> = {
     image: "https://cdn.imweb.me/thumbnail/20260210/71526f47e9660.jpg",
   },
   "커피앤시가렛": {
-    image: "https://cdn.imweb.me/thumbnail/20260210/f25376f3afe91.jpg",
+    image: "/menu/coffee-and-cigarettes.jpg",
     desc: "라프로익베이스의 피트 칵테일, 템므만의 피트를 재해석한 시그니처 칵테일",
   },
   "갓파더": {
