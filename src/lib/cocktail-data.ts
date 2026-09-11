@@ -11,60 +11,60 @@ export const COCKTAIL_DATA: Record<string, CocktailInfo> = {
     alc: "15% alc./vol.",
   },
   "두유하이": {
-    image: "https://cdn.imweb.me/thumbnail/20260210/87946912efaad.jpg",
+    image: "/menu/soy-milk-high.jpg",
     desc: "bourbon, butterscotch etc.",
     alc: "10% alc./vol.",
   },
   "라프로익 패션드": {
-    image: "https://cdn.imweb.me/thumbnail/20260210/f926fab1042b7.jpg",
+    image: "/menu/laphroaig-fashioned.jpg",
   },
   "라프로익 페니실린": {
-    image: "https://cdn.imweb.me/thumbnail/20260210/ca9f7c5990613.jpg",
+    image: "/menu/laphroaig-penicillin.jpg",
   },
   "비터진": {
-    image: "https://cdn.imweb.me/thumbnail/20260210/71526f47e9660.jpg",
+    image: "/menu/bitter-gin.jpg",
   },
   "커피앤시가렛": {
     image: "/menu/coffee-and-cigarettes.jpg",
     desc: "라프로익베이스의 피트 칵테일, 템므만의 피트를 재해석한 시그니처 칵테일",
   },
   "갓파더": {
-    image: "https://cdn.imweb.me/thumbnail/20240609/f8fa6c5070965.jpg",
+    image: "/menu/godfather.jpg",
     desc: "bourbon, disaronno etc.",
     alc: "33% alc./vol.",
   },
   "체리 올드패션드": {
-    image: "https://cdn.imweb.me/thumbnail/20240609/b999cc178d4f4.jpg",
+    image: "/menu/cherry-old-fashioned.jpg",
     desc: "bourbon, angostura etc.",
     alc: "26% alc./vol.",
   },
   "와일드 플라워 쥴렙": {
-    image: "https://cdn.imweb.me/thumbnail/20250301/7abd0dbc60b22.jpg",
+    image: "/menu/wild-flower-julep.jpg",
   },
   "버진 베리 모히또": {
-    image: "https://cdn.imweb.me/thumbnail/20250302/d2c47b5d73cc1.jpg",
+    image: "/menu/virgin-berry-mojito.jpg",
     desc: "논알콜 / 알콜 +3,000원",
   },
   "버진 라임 모히또": {
-    image: "https://cdn.imweb.me/thumbnail/20250302/181750e136b2e.jpg",
+    image: "/menu/virgin-lime-mojito.jpg",
     desc: "논알콜 / 알콜 +3,000원",
   },
   "파우스트": {
-    image: "https://cdn.imweb.me/thumbnail/20250302/6a0344bd1efcd.jpg",
+    image: "/menu/faust.jpg",
   },
   "진토닉": {
-    image: "https://cdn.imweb.me/thumbnail/20250918/7dc7080982c16.jpg",
+    image: "/menu/gin-tonic.jpg",
   },
   "진피즈": {
-    image: "https://cdn.imweb.me/thumbnail/20250918/b3035039162e0.jpg",
+    image: "/menu/gin-fizz.jpg",
   },
   "진리키": {
-    image: "https://cdn.imweb.me/thumbnail/20250918/252f3a4f6431d.jpg",
+    image: "/menu/gin-rickey.jpg",
   },
   "다이키리": {
-    image: "https://cdn.imweb.me/thumbnail/20250918/625f168c95e2a.jpg",
+    image: "/menu/daiquiri.jpg",
   },
   "콜드브루 마티니": {
-    image: "https://cdn.imweb.me/thumbnail/20250918/6885ba57c0ac7.jpg",
+    image: "/menu/cold-brew-martini.jpg",
   },
 };
