@@ -19,16 +19,17 @@ if [ ! -f .env.local ]; then
   exit 1
 fi
 
-SUPA_URL=$(grep "^NEXT_PUBLIC_SUPABASE_URL=" .env.local | cut -d= -f2-)
-SUPA_KEY=$(grep "^NEXT_PUBLIC_SUPABASE_ANON_KEY=" .env.local | cut -d= -f2-)
+# SUPABASE_SERVICE_ROLE_KEY 가 없으면 서버가 정적 폴백으로 돌아가 수정이 저장되지 않습니다.
+REQUIRED_VARS="NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY ADMIN_PIN"
 
-if [ -z "$SUPA_URL" ] || [ -z "$SUPA_KEY" ]; then
-  echo "❌ Supabase URL / anon key를 .env.local에서 찾을 수 없습니다."
-  exit 1
-fi
-
-echo "✓ Supabase URL : $SUPA_URL"
-echo "✓ Supabase Key : ${SUPA_KEY:0:30}…(중간 생략)"
+for VAR in $REQUIRED_VARS; do
+  VALUE=$(grep "^$VAR=" .env.local | cut -d= -f2-)
+  if [ -z "$VALUE" ]; then
+    echo "❌ .env.local 에 $VAR 이 없습니다."
+    exit 1
+  fi
+  echo "✓ $VAR : ${VALUE:0:20}…"
+done
 echo ""
 
 # 2. Vercel 로그인 확인
@@ -53,12 +54,14 @@ echo ""
 echo "──── 환경변수 ────"
 # 이전 값이 있을 수 있어 일단 삭제 → 다시 등록
 for ENV in production preview development; do
-  echo "  · $ENV 환경에 NEXT_PUBLIC_SUPABASE_URL"
-  echo "$SUPA_URL" | npx --yes vercel@latest env add NEXT_PUBLIC_SUPABASE_URL $ENV 2>/dev/null || true
-  echo "  · $ENV 환경에 NEXT_PUBLIC_SUPABASE_ANON_KEY"
-  echo "$SUPA_KEY" | npx --yes vercel@latest env add NEXT_PUBLIC_SUPABASE_ANON_KEY $ENV 2>/dev/null || true
+  for VAR in $REQUIRED_VARS; do
+    VALUE=$(grep "^$VAR=" .env.local | cut -d= -f2-)
+    npx --yes vercel@latest env rm "$VAR" $ENV --yes > /dev/null 2>&1 || true
+    printf '%s' "$VALUE" | npx --yes vercel@latest env add "$VAR" $ENV > /dev/null 2>&1 || true
+    echo "  · $ENV / $VAR"
+  done
 done
-echo "✓ 환경변수 등록 완료 (또는 이미 등록됨)"
+echo "✓ 환경변수 등록 완료"
 echo ""
 
 # 5. Production 배포

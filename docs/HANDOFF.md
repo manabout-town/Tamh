@@ -9,7 +9,8 @@
 
 칵테일 수정 기능과 Supabase 전환은 코드로 끝났고 푸시돼 있습니다.
 칵테일 사진 15종도 2026-09-11 에 생성해서 넣고 DB까지 연결했습니다.
-**남은 일은 하나입니다. Vercel 환경변수 등록.**
+**2026-09-11 완료. Vercel 환경변수 등록과 fetch 캐시 문제까지 끝나서
+라이브에서 수정이 저장되고 새로고침해도 유지됩니다. 4절 참고.**
 
 ---
 
@@ -99,26 +100,32 @@ Vercel 프로젝트에 깃 연동이 걸려 있지 않습니다. 배포는 레�
 
 ---
 
-## 4. 남은 일 ①: Vercel 환경변수 (제일 급함)
+## 4. 끝난 일 ③: 저장이 안 남던 문제 (2026-09-11 해결)
 
-**이게 없으면 지금 배포된 사이트는 여전히 정적 데이터를 쓰고 수정이 저장되지 않습니다.**
+증상은 "수정해도 새로고침하면 리셋". 원인이 두 겹이었습니다.
 
-Vercel → `tamh-bar` → Settings → Environment Variables.
-Production / Preview / Development 세 곳 모두에 넣으세요.
+1. **`SUPABASE_SERVICE_ROLE_KEY` 가 Vercel 에 없었습니다.** `menu-store.ts` 는 URL 과
+   service role 키가 둘 다 있어야 Supabase 를 쓰고, 없으면 `static-db.ts` 메모리
+   배열로 폴백합니다. 서버리스라 콜드 스타트마다 초기화됐습니다.
+   `deploy.sh` 도 URL 과 anon 키만 등록하고 service role 키와 PIN 은 건너뛰고
+   있었습니다. 지금은 네 개를 전부 등록하고, 하나라도 없으면 배포를 멈춥니다.
+2. **Next.js 가 Supabase 응답을 캐싱했습니다.** 키를 넣은 뒤에도 DB 는 16,500 인데
+   API 는 16,000 을 계속 돌려줬습니다. 라우트에 `force-dynamic` 이 있어도 서버에서
+   나가는 fetch 는 따로 캐싱됩니다. `menu-store.ts` 의 Supabase 클라이언트에
+   `cache: "no-store"` fetch 를 물려서 해결했습니다. 읽기·쓰기가 전부 이 클라이언트
+   하나를 지나가므로 여기만 고치면 됩니다.
+
+Vercel 환경변수 네 개는 Production / Preview / Development 세 곳에 모두 등록돼 있습니다.
 
 ```
 NEXT_PUBLIC_SUPABASE_URL       = https://sravsgmktgiyrkohvvwa.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY  = Supabase → Project Settings → API Keys 의 anon 키
 SUPABASE_SERVICE_ROLE_KEY      = 같은 화면의 service_role 키
-ADMIN_PIN                      = 매장에서 쓸 네 자리 숫자
+ADMIN_PIN                      = 매장 PIN
 ```
 
-넣은 뒤 재배포하고 확인할 것:
-
-1. `/menu`가 뜨고 메뉴 235종이 보이는지
-2. 자물쇠 → PIN → 칵테일 카드 누르면 수정 창이 열리는지
-3. 가격을 바꿔 저장하고 **새로고침해도 유지되는지** (이게 핵심)
-4. 다른 기기에서 열었을 때도 같은 값인지
+프로덕션에서 확인한 것: 관리자 API 로 가격 저장 → API 응답과 `/menu` 서버 렌더 양쪽에
+즉시 반영 → 원복까지 왕복 확인. 잘못된 PIN 은 401.
 
 ---
 

@@ -29,6 +29,12 @@ function client(): SupabaseClient {
   if (!_client) {
     _client = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
       auth: { persistSession: false, autoRefreshToken: false },
+      // Next.js 는 서버에서 나가는 fetch 를 기본으로 캐싱합니다. 그대로 두면 관리자가
+      // 값을 바꿔도 화면이 예전 응답을 계속 보여줍니다. 항상 DB 를 다시 읽게 합니다.
+      global: {
+        fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+          fetch(input, { ...init, cache: "no-store" }),
+      },
     });
   }
   return _client;
