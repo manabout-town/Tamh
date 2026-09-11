@@ -8,7 +8,8 @@
 ## 0. 한 줄 요약
 
 칵테일 수정 기능과 Supabase 전환은 코드로 끝났고 푸시돼 있습니다.
-**남은 일은 두 가지입니다. Vercel 환경변수 등록과 칵테일 사진 15종 생성.**
+칵테일 사진 15종도 2026-09-11 에 생성해서 넣고 DB까지 연결했습니다.
+**남은 일은 하나입니다. Vercel 환경변수 등록.**
 
 ---
 
@@ -121,52 +122,47 @@ ADMIN_PIN                      = 매장에서 쓸 네 자리 숫자
 
 ---
 
-## 5. 남은 일 ②: 칵테일 사진 15종
+## 5. 끝난 일 ②: 칵테일 사진 15종 (2026-09-11 완료)
 
-### 지금 상태
+15종 모두 Gemini(Nano Banana 2)로 생성해 `public/menu/` 에 넣고, Supabase
+`menus.image_url` 과 정적 폴백(`static-db.ts`, `cocktail-data.ts`)을 모두
+`/menu/<slug>.jpg` 로 맞췄습니다. 커밋 `bd5af39`.
 
-| 메뉴 | 상태 |
+| 메뉴 | 파일 |
 |------|------|
-| 커피앤시가렛 | ✅ 매장 실사진 적용 완료 |
-| 불오름 | ✅ 기존 사진 그대로 유지 (건드리지 말 것) |
-| 나머지 15종 | ⬜ Gemini로 생성해서 교체 |
+| 갓파더 | `/menu/godfather.jpg` |
+| 체리 올드패션드 | `/menu/cherry-old-fashioned.jpg` |
+| 와일드 플라워 쥴렙 | `/menu/wild-flower-julep.jpg` |
+| 버진 베리 모히또 | `/menu/virgin-berry-mojito.jpg` |
+| 버진 라임 모히또 | `/menu/virgin-lime-mojito.jpg` |
+| 진토닉 | `/menu/gin-tonic.jpg` |
+| 진피즈 | `/menu/gin-fizz.jpg` |
+| 진리키 | `/menu/gin-rickey.jpg` |
+| 다이키리 | `/menu/daiquiri.jpg` |
+| 콜드브루 마티니 | `/menu/cold-brew-martini.jpg` |
+| 두유하이 | `/menu/soy-milk-high.jpg` |
+| 라프로익 패션드 | `/menu/laphroaig-fashioned.jpg` |
+| 라프로익 페니실린 | `/menu/laphroaig-penicillin.jpg` |
+| 비터진 | `/menu/bitter-gin.jpg` |
+| 파우스트 | `/menu/faust.jpg` |
 
-15종 목록: 갓파더, 체리 올드패션드, 와일드 플라워 쥴렙, 버진 베리 모히또,
-버진 라임 모히또, 파우스트, 진토닉, 진피즈, 진리키, 다이키리, 콜드브루 마티니,
-두유하이, 라프로익 패션드, 라프로익 페니실린, 비터진
+커피앤시가렛은 매장 실사진, 불오름은 기존 사진 그대로입니다.
 
-### 작업 순서
+생성물 우하단에 Gemini 워터마크가 들어가므로, 원본 1024 정사각형에서 우·하단 15%를
+뺀 영역을 잘라 1200x1200 으로 리사이즈했습니다. 사진을 새로 추가할 때도 같은 처리가
+필요합니다 (`scripts/fit_menu_image.py` 는 가운데 정사각형만 잡고 워터마크는 못 뺍니다).
 
-1. 크롬으로 https://gemini.google.com/images 를 엽니다.
-2. `docs/cocktail-image-prompts.md`의 **공통 스타일 + 메뉴별 프롬프트**를 붙여 생성합니다.
-   커피앤시가렛 사진의 조명과 배경에 맞춰뒀으니 15장이 같은 톤으로 나옵니다.
-3. 받은 파일을 아래 스크립트에 넣으면 1200x1200 정사각형으로 맞춰 `public/menu/`에 저장됩니다.
+### 아직 확인이 필요한 것
 
-```bash
-python3 scripts/fit_menu_image.py ~/Downloads/받은파일.png gin-tonic
-# → public/menu/gin-tonic.jpg 생성, 연결용 SQL도 같이 출력됩니다
-```
+시그니처 5종(두유하이, 라프로익 패션드, 라프로익 페니실린, 비터진, 파우스트)은 표준
+형태가 없어 메뉴 설명에서 유추한 프롬프트로 만들었습니다. **실물과 다를 수 있으니
+바텐더 확인을 받으세요.** 매장에서 직접 찍은 사진이 있으면 그쪽이 낫습니다.
 
-Pillow가 없으면 `pip install Pillow` 한 번만 하면 됩니다.
+교체하려면 사진을 같은 파일명으로 `public/menu/` 에 덮어쓰면 됩니다. DB 경로는
+그대로 두면 됩니다.
 
-4. 메뉴에 연결합니다. 둘 중 편한 쪽으로.
-   - 메뉴판 관리자 모드에서 카드 → `주소 입력`에 `/menu/gin-tonic.jpg` → 저장
-   - 또는 스크립트가 출력한 SQL을 Supabase SQL Editor에 붙여넣기
-5. `src/lib/cocktail-data.ts`의 예비값도 같은 경로로 맞춰둡니다 (DB가 비었을 때 대비).
-6. 커밋하고 푸시합니다.
-
-### 주의할 점
-
-시그니처 5종은 표준 형태가 없습니다. 두유하이, 라프로익 패션드, 라프로익 페니실린,
-비터진, 파우스트. 웹서치로 자료가 나오지 않아 메뉴 설명에서 유추한 프롬프트입니다.
-**실물과 다를 수 있으니 바텐더 확인을 받는 게 좋습니다.**
-생성 이미지 대신 매장에서 직접 찍는 편이 나을 수도 있습니다.
-
-지금 15종에 걸린 `cdn.imweb.me` 주소는 예전 홈페이지의 실사진으로 보입니다.
-혹시 그 주소가 끊길까 봐 교체하시는 거라면, 생성보다 그 사진들을 내려받아
-`public/menu/`로 옮기는 쪽이 낫습니다.
-
----
+참고로 예전 홈페이지 사진(`cdn.imweb.me`)은 이 컴퓨터에서 아직 열립니다. 생성 이미지
+대신 그 실사진을 쓰기로 하면 내려받아 같은 파일명으로 덮어쓰면 됩니다.
 
 ## 6. 이 세션에서 막혔던 것 (반복하지 마세요)
 
@@ -203,7 +199,6 @@ ESLint 설정은 레포에 없어서 `npm run lint`는 초기 설정을 물어�
 ```
 Tamh 메뉴판 작업 이어서 할 거야. docs/HANDOFF.md 읽고 시작해.
 브랜치는 claude/tamh-menu-work-ro52g8.
-크롬으로 https://gemini.google.com/images 열어서
-docs/cocktail-image-prompts.md 의 프롬프트로 칵테일 15종 사진 만들고
-scripts/fit_menu_image.py 로 정리해서 public/menu/ 에 넣고 메뉴까지 연결해줘.
+남은 건 Vercel 환경변수 등록이야 (4절). 넣고 재배포한 다음
+수정이 저장되는지까지 확인해줘.
 ```
